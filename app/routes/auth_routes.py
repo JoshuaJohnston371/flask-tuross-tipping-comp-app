@@ -9,6 +9,7 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        name = request.form.get('name')
         username = request.form.get('username')
         password = request.form.get('password')
 
@@ -17,7 +18,7 @@ def register():
             flash('Username already exists. Please use a different Username.', 'danger')
             return redirect(url_for('auth.register'))
 
-        new_user = User(username=username)
+        new_user = User(name=name, username=username)
         new_user.set_password(password)
         
         db.session.add(new_user)
@@ -37,7 +38,7 @@ def login():
 
         user = User.query.filter_by(username=username).first()
 
-        if user and user.check_password(password):  # (Later we'll add hashing)
+        if user and user.check_password(password):
             login_user(user)
             flash('Logged in successfully!', 'success')
             return redirect(url_for('main.home'))

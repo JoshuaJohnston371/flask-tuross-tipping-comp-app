@@ -9,6 +9,7 @@ au_tz = pytz.timezone("Australia/Sydney")
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(300), nullable=False)
     phone_number = db.Column(db.String(20), nullable=True)
