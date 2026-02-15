@@ -6,7 +6,7 @@ from .. import db
 auth_bp = Blueprint('auth', __name__)
 
 # Register route (disabled)
-'''@auth_bp.route('/register', methods=['GET', 'POST'])
+@auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -27,7 +27,7 @@ def register():
         return redirect(url_for('auth.login'))
 
     return render_template('register.html', request_method=request.method)
-'''
+
 # Login route
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():

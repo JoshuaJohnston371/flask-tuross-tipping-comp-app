@@ -6,13 +6,14 @@ from app.models import Fixture, FixtureFree, db, User, UserTipStats, Tip
 from app import create_app 
 from datetime import datetime, date, timedelta
 import pytz
+import json
 
 # Load environment variables
 load_dotenv()
 
 #Functions for Free API
 def get_free_nrl_fixtures():
-    url = "https://fixturedownload.com/feed/json/nrl-2025"
+    url = "https://fixturedownload.com/feed/json/nrl-2026"
     response = requests.get(url)
     if response.status_code == 200:
         fixtures = response.json()
@@ -85,7 +86,7 @@ def upsert_free_fixtures():
         
             new_fixture = FixtureFree(
                 match_id=fixture.get("MatchNumber", None),
-                season=2025,
+                season=2026,
                 round=fixture.get("RoundNumber",None),
                 home_team=fixture.get("HomeTeam",None),
                 away_team=fixture.get("AwayTeam", None),
@@ -101,7 +102,7 @@ def upsert_free_fixtures():
     db.session.commit()
 
 
-def find_current_round():
+def find_current_round() -> int:
     today = date.today()
     monday = today - timedelta(days=today.weekday())
     sunday = monday + timedelta(days=6)
@@ -116,7 +117,7 @@ def find_current_round():
         return current_round[0]
     else:
         print("Current round returned empty")
-        return None
+        return 0
 
 #Helper function to evaluate user round results
 def get_user_round_results(user_id, round_number):
@@ -148,7 +149,7 @@ def update_user_tip_stats():
     users = User.query.all()
 
     for user in users:
-        for round_number in range(11, find_current_round() + 1):  # Start from round 11, this is first round of non-manual tip stats
+        for round_number in range(1, find_current_round() + 1):  # Start from round 11, this is first round of non-manual tip stats
             round_results = get_user_round_results(user.id, round_number)
 
             stat = UserTipStats.query.filter_by(user_id=user.id, round_number=round_number).first()
@@ -181,4 +182,6 @@ def main():
 
 # --- Entry point for cron job ---
 if __name__ == "__main__":
-    main()
+    #main()
+    fixtures = get_free_nrl_fixtures()
+    print(json.dumps(fixtures[0], indent=2))

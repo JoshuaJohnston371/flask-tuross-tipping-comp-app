@@ -1,13 +1,13 @@
 # init_fixtures.py
 
 from app import create_app, db
-from app.services.fixtures import upsert_fixtures, upsert_free_fixtures
+from app.services.fixtures import upsert_free_fixtures
 
 app = create_app()
 
 with app.app_context():
-    season = 2025
-    max_round = 27  # Adjust if 2025 has more or fewer rounds
+    season = 2026
+    max_round = 27  # Adjust if 2026 has more or fewer rounds
 
     upsert_free_fixtures()
     
