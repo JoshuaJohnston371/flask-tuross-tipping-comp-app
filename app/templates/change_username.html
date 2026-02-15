@@ -2,6 +2,7 @@
 <h5 class="mt-4">Change a User's Username</h5>
 
 <form method="POST" action="{{ url_for('admin.admin_dashboard') }}" class="row g-3 mt-3">
+  <input type="hidden" name="action" value="change_username" />
   <div class="col-md-4">
     <label for="user_id" class="form-label">Select User</label>
     <select class="form-select" id="user_id" name="user_id" required>
