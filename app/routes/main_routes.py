@@ -12,8 +12,8 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def home():
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.register'))
+    # if not current_user.is_authenticated:
+    #     return redirect(url_for('auth.register'))
     round_number = find_current_round()
     fixtures = FixtureFree.query.filter_by(round=round_number).order_by(FixtureFree.date).all()
     match_ids = [f.match_id for f in fixtures]

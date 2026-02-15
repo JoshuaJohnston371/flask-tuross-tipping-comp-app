@@ -58,7 +58,43 @@
 
     <!-- Register User Tab -->
     <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-      <p class="mt-3 text-white">Register User functionality coming soon.</p>
+      <div class="mt-3 text-white">
+        {% if register_success %}
+          <div class="alert alert-success text-center">User created successfully.</div>
+        {% elif register_error %}
+          <div class="alert alert-danger text-center">{{ register_error }}</div>
+        {% endif %}
+
+        <form method="POST" class="mt-3">
+          <input type="hidden" name="action" value="register_user" />
+          <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="Full name" />
+          </div>
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required />
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required />
+          </div>
+          <div class="mb-3">
+            <label for="phone_number" class="form-label">Phone number</label>
+            <input type="text" class="form-control" id="phone_number" name="phone_number" placeholder="Optional" />
+          </div>
+          <div class="mb-3">
+            <label for="avatar" class="form-label">Avatar</label>
+            <select class="form-select" id="avatar" name="avatar">
+              <option value="">Default</option>
+              {% for avatar in avatars %}
+                <option value="{{ avatar }}">{{ avatar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Create user</button>
+        </form>
+      </div>
     </div>
 
     <!-- Change Username Tab -->
