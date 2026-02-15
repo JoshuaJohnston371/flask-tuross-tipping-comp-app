@@ -17,18 +17,22 @@ def admin_dashboard():
 
     current_round = find_current_round()
 
-    if not current_round:
-        return render_template("admin.html", round_data=None)
-
     users = User.query.all()
-    current_fixtures = FixtureFree.query.filter_by(round=current_round).all()
-    current_match_ids = [f.match_id for f in current_fixtures]
+    if current_round:
+        current_fixtures = FixtureFree.query.filter_by(round=current_round).all()
+        current_match_ids = [f.match_id for f in current_fixtures]
+    else:
+        current_fixtures = []
+        current_match_ids = []
     avatar_folder = os.path.join(current_app.static_folder, "avatars")
     avatars = sorted([f for f in os.listdir(avatar_folder) if f.endswith((".png", ".jpg", ".jpeg"))])
 
     tips_by_user = {}
     for user in users:
-        tips = Tip.query.filter(Tip.user_id == user.id, Tip.match.in_(current_match_ids)).all()
+        if current_match_ids:
+            tips = Tip.query.filter(Tip.user_id == user.id, Tip.match.in_(current_match_ids)).all()
+        else:
+            tips = []
         tips_by_user[user.id] = tips
 
     # Handle Change Username form submission
