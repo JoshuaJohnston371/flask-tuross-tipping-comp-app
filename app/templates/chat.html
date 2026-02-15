@@ -46,14 +46,6 @@
     margin-left: 10px;
   }
 
-  .match-selector, .match-summary {
-    background-color: #2f2f2f;  /* dark grey */
-    color: white;               /* text color */
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-  }
-
   /* Chat box styling */
   .chat-box {
     background-color: #f1f1f1;  /* light grey */
@@ -74,6 +66,14 @@
     margin-bottom: 0.5rem;
   }
 
+  .match-summary {
+    background-color: #2f2f2f;
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+
   .send-button {
     padding: 0.5rem 1rem;
     border: none;
@@ -90,62 +90,23 @@
 
 <div class="chat-container">
 
-  <!-- Match Selector -->
-  <div class="match-selector">
-    <form method="get" action="{{ url_for('chat.chat') }}">
-      <label for="match_id">Select Match:</label>
-      <select name="match_id" id="match_id" onchange="this.form.submit()">
-        {% for match in matches %}
-          <option value="{{ match.match_id }}" {% if selected_match and match.match_id == selected_match.match_id %}selected{% endif %}>
-            {{ match.home_team }} vs {{ match.away_team }} - {{ match.date.strftime('%A')}} {{ match.time.strftime('%I:%M %p') }}
-          </option>
-        {% endfor %}
-      </select>
-    </form>
-  </div>
-  
-
-  <!-- Tipping Summary -->
+  <!-- Chat Box -->
   {% if selected_match %}
+    <div class="chat-box" id="chat-box">
+      {% for msg in chat_messages %}
+        <div class="chat-message">
+          <strong>{{ msg.user.username }}</strong> [{{ msg.timestamp.strftime('%H:%M') }}]: {{ msg.message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
     <div class="match-summary">
-      <h4>{{ selected_match.home_team }} vs {{ selected_match.away_team }}</h4>
-      <p><strong>Kickoff:</strong> {{selected_match.date.strftime('%A')}} {{ selected_match.time.strftime('%I:%M %p') }}</p>
-      <div style="display: flex; justify-content: space-between;">
-        {% if not after_5pm_thurs %}
-          Users tips viewable after 5pm Thurs
-        {% else %}
-        <div>
-          <strong>Tipped {{ selected_match.home_team }}:</strong>
-          <ul>
-            {% for user in tipped_users.get(selected_match.home_team, []) %}
-              <li>{{ user }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        <div>
-          <strong>Tipped {{ selected_match.away_team }}:</strong>
-          <ul>
-            {% for user in tipped_users.get(selected_match.away_team, []) %}
-              <li>{{ user }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-      </div>
+      <p><em>Chat is unavailable until fixtures are loaded.</em></p>
     </div>
   {% endif %}
 
-  <!-- Chat Box -->
-  <div class="chat-box" id="chat-box">
-    {% for msg in chat_messages %}
-      <div class="chat-message">
-        <strong>{{ msg.user.username }}</strong> [{{ msg.timestamp.strftime('%H:%M') }}]: {{ msg.message }}
-      </div>
-    {% endfor %}
-  </div>
-
   <!-- Chat Input -->
-  {% if chat_open %}
+  {% if chat_open and selected_match %}
     <div class="chat-input">
       <form id="chat-form">
         <input type="hidden" name="match_id" value="{{ selected_match.match_id }}">

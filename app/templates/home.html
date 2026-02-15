@@ -59,6 +59,53 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       }
 
+      .chat-container {
+        max-width: 900px;
+        margin: 1rem auto 0;
+      }
+
+      .chat-box {
+        background-color: #f1f1f1;
+        color: black;
+        padding: 1rem;
+        border-radius: 8px;
+        height: 320px;
+        overflow-y: scroll;
+        margin-bottom: 1rem;
+      }
+
+      .chat-message {
+        margin-bottom: 10px;
+      }
+
+      .chat-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        vertical-align: middle;
+        margin-right: 8px;
+        object-fit: cover;
+      }
+
+      .chat-input {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        margin-bottom: 0.5rem;
+        background-color: #fff;
+      }
+
+      .chat-input form {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .chat-input input[type="text"] {
+        flex: 1;
+        padding: 0.5rem;
+      }
+
       .team-logo {
         width: 60px;
         height: 60px;
@@ -285,109 +332,32 @@
       </div>
 
       {% if current_user.is_authenticated %}
-      <h3 class="mb-4 text-center text-white">
-        Your Tips & Round {{ round_number }} Fixtures
-      </h3>
-
-      {% if fixtures %} {% for fixture in fixtures %}
-      <div class="match-card">
-        <div
-          class="d-flex flex-column flex-md-row justify-content-between align-items-center"
-        >
-          <div class="d-flex align-items-center mb-3 mb-md-0 ps-md-4">
-            <div class="d-flex flex-column align-items-center me-4">
-              <span class="team-label home-label">Home</span>
-              <img
-                src="{{ team_logos[fixture.home_team] }}"
-                alt="{{ fixture.home_team }} logo"
-                class="team-logo {% if tip_map[fixture.match_id] == fixture.home_team %}selected-team{% endif %}"
-              />
-              <span class="team-box home-color mt-2"
-                >{{ fixture.home_team }}</span
-              >
+      <div class="chat-container">
+        <h3 class="mb-3 text-center text-white">Community Chat</h3>
+        {% if selected_match %}
+        <div class="chat-box" id="chat-box">
+          {% for msg in chat_messages %}
+            <div class="chat-message">
+              <strong>{{ msg.user.username }}</strong>
+              [{{ msg.timestamp.strftime('%H:%M') }}]:
+              {{ msg.message }}
             </div>
-
-            <div class="px-3 vs-text text-center">vs</div>
-
-            <div class="d-flex flex-column align-items-center ms-4">
-              <span class="team-label home-label">Away</span>
-              <img
-                src="{{ team_logos[fixture.away_team] }}"
-                alt="{{ fixture.away_team }} logo"
-                class="team-logo {% if tip_map[fixture.match_id] == fixture.away_team %}selected-team{% endif %}"
-              />
-              <span class="team-box away-color mt-2"
-                >{{ fixture.away_team }}</span
-              >
-            </div>
-          </div>
-
-          <!-- Date, Day and Time in the middle -->
-          <div class="match-datetime text-center">
-            <span
-              >{{ fixture.date.strftime('%A, %B %d, %Y') }}<br />
-              {{ fixture.time.strftime('%I:%M %p') }}</span
-            >
-          </div>
-
-          <!-- Tip and match detail side-by-side block -->
-          <div class="text-center text-md-end pe-md-4">
-            <div class="d-flex flex-column align-items-md-end">
-              <div
-                class="d-flex align-items-center justify-content-md-end mb-2"
-              >
-                {% if tip_map[fixture.match_id] %}
-                <span class="text-dark fw-semibold me-2">Your Tip:</span>
-                <img
-                  src="{{ team_logos[tip_map[fixture.match_id]] }}"
-                  alt="Tip logo"
-                  class="tip-logo"
-                />
-                {% else %}
-                <span class="text-muted">No tip submitted</span>
-                {% endif %}
-              </div>
-
-              <!-- Tip result placeholder -->
-              <div class="mt-1">
-                {% if result_map and result_map[fixture.match_id] is not none %}
-                {% if result_map[fixture.match_id] == tip_map[fixture.match_id]
-                %}
-                <span class="badge bg-success">Correct Tip!</span>
-                {% else %}
-                <span class="badge bg-danger">Wrong Tip</span>
-                {% endif %} {% else %}
-                <span class="badge bg-secondary">Result Pending</span>
-                {% endif %}
-              </div>
-
-              <!-- Match details button -->
-              <button
-                class="btn btn-sm btn-outline-secondary mt-2 align-self-md-end"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#details-{{ fixture.match_id }}"
-              >
-                Match Details
-              </button>
-            </div>
-          </div>
+          {% endfor %}
         </div>
-
-        <div class="collapse mt-3" id="details-{{ fixture.match_id }}">
-          <div class="border-top pt-2">
-            <p class="mb-0">
-              <strong>Kickoff:</strong> {{ fixture.time.strftime("%I:%M %p") }}
-            </p>
-            {% if fixture.venue %}
-            <p class="mb-0"><strong>Venue:</strong> {{ fixture.venue }}</p>
-            {% endif %}
-          </div>
+        {% if chat_open %}
+        <div class="chat-input">
+          <form id="chat-form">
+            <input type="hidden" name="match_id" value="{{ selected_match.match_id }}">
+            <input type="text" name="message" id="message" placeholder="Type your message..." required>
+            <button type="submit" class="btn btn-primary">Send</button>
+          </form>
         </div>
+        {% endif %}
+        {% else %}
+        <p class="text-center text-white">Chat is unavailable until fixtures are loaded.</p>
+        {% endif %}
       </div>
-      {% endfor %} {% else %}
-      <p class="text-center">No fixtures available for this round.</p>
-      {% endif %} {% endif %}
+      {% endif %}
     </main>
 
     <img
@@ -400,5 +370,64 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const chatBox = document.getElementById("chat-box");
+      const form = document.getElementById("chat-form");
+      const matchId = "{{ selected_match.match_id if selected_match else '' }}";
+
+      function scrollChatToBottom() {
+        if (chatBox) {
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      }
+
+      function loadMessages() {
+        if (!matchId) {
+          return;
+        }
+        fetch(`/chat/messages?match_id=${matchId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.messages && chatBox) {
+              chatBox.innerHTML = "";
+              data.messages.forEach(msg => {
+                const div = document.createElement("div");
+                div.classList.add("chat-message");
+                div.innerHTML = `
+                  <img src="${msg.avatar}" alt="avatar" class="chat-avatar" />
+                  <span class="chat-timestamp">
+                    ${msg.username.substring(0,6)} [${msg.timestamp}]
+                  </span>: ${msg.message}
+                `;
+                chatBox.appendChild(div);
+              });
+              scrollChatToBottom();
+            }
+          });
+      }
+
+      if (form) {
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const formData = new FormData(form);
+          fetch("{{ url_for('chat.post_message') }}", {
+            method: "POST",
+            body: formData
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.message) {
+                loadMessages();
+                form.reset();
+              } else if (data.error) {
+                alert(data.error);
+              }
+            });
+        });
+      }
+
+      setInterval(loadMessages, 5000);
+      scrollChatToBottom();
+    </script>
   </body>
 </html>

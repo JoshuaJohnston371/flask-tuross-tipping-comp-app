@@ -1,11 +1,10 @@
 # app/routes/chat_routes.py
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from datetime import datetime, timedelta, time, date
-from app.models import db, FixtureFree, Tip, User, ChatMessage
+from datetime import datetime, timedelta, date
+from app.models import db, FixtureFree, ChatMessage
 from app.services.fixtures import find_current_round
-from app.utils.helper_functions import is_past_thursday_5pm_aus
 import pytz
 
 chat_bp = Blueprint('chat', __name__)
@@ -15,13 +14,13 @@ def is_chat_open(match):
     """Returns True if chat is open (30 mins before kickoff to midnight of match day)."""
     if not match or not match.time:
         return False
-    
+
     datetime_now = datetime.now(au_tz)
-    
+
     date_now = datetime_now.date()
     time_now = datetime_now.replace(second=0, microsecond=0).time()
     now = datetime.combine(date_now, time_now)
-    
+
     kickoff_time = match.time
     kickoff_date = match.date
     kickoff_datetime = datetime.combine(kickoff_date, kickoff_time)
@@ -33,36 +32,17 @@ def is_chat_open(match):
 @login_required
 def chat():
     matches = FixtureFree.query.filter_by(round=find_current_round()).all()
-    selected_match_id = request.args.get("match_id")
-    selected_match = (
-        FixtureFree.query.filter(FixtureFree.match_id==selected_match_id).first()
-        if selected_match_id
-        else matches[0] if matches else None
-    )
-    print(f"Selected match ID!!!!!!: {selected_match_id}")
-    print(selected_match)
-    tipped_users = {}
-    if selected_match:
-        tips = Tip.query.filter_by(match=selected_match.match_id).all()
-        for tip in tips:
-            user = User.query.get(tip.user_id)
-            if user:
-                tipped_users.setdefault(tip.selected_team, []).append(user.username)
+    selected_match = matches[0] if matches else None
 
     chat_messages = []
     if selected_match:
         chat_messages = ChatMessage.query.filter_by(match_id=selected_match.match_id).order_by(ChatMessage.timestamp.asc()).all()
 
-    chat_open = is_chat_open(selected_match)
-
     return render_template(
         "chat.html",
-        matches=matches,
         selected_match=selected_match,
-        tipped_users=tipped_users,
         chat_messages=chat_messages,
-        chat_open=True, #chat_open
-        after_5pm_thurs=is_past_thursday_5pm_aus()
+        chat_open=True,
     )
 
 @chat_bp.route('/chat/post_message', methods=["POST"])
