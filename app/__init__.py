@@ -15,7 +15,16 @@ def create_app():
     load_dotenv()
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tipping_database_user:Lvb6YlMWj7mmGbHzCaqcWFWmX6BIDevR@dpg-d0i3fr3uibrs739tm41g-a.oregon-postgres.render.com/tipping_database'
+    os.makedirs(app.instance_path, exist_ok=True)
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        # Normalize legacy postgres scheme to SQLAlchemy-compatible one.
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    else:
+        database_url = f"sqlite:///{os.path.join(app.instance_path, 'database.db')}"
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     db.init_app(app)
