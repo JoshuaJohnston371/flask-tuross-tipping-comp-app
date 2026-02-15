@@ -106,6 +106,37 @@
   </div>
 </div>
 
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var tabLinks = document.querySelectorAll('#adminTab [data-bs-toggle="tab"]');
+    var tabPanes = document.querySelectorAll("#adminTabContent .tab-pane");
+
+    tabLinks.forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        var targetSelector = link.getAttribute("href") || link.getAttribute("data-bs-target");
+        if (!targetSelector) {
+          return;
+        }
+
+        tabLinks.forEach(function (item) {
+          item.classList.remove("active");
+          item.setAttribute("aria-selected", "false");
+        });
+        tabPanes.forEach(function (pane) {
+          pane.classList.remove("show", "active");
+        });
+
+        var targetPane = document.querySelector(targetSelector);
+        if (targetPane) {
+          link.classList.add("active");
+          link.setAttribute("aria-selected", "true");
+          targetPane.classList.add("show", "active");
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}
 
 
