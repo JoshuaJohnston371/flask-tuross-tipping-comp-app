@@ -103,7 +103,16 @@ def upsert_free_fixtures():
 
 
 def find_current_round() -> int:
-    today = date.today()
+    sydney_tz = pytz.timezone("Australia/Sydney")
+    today = datetime.now(sydney_tz).date()
+
+    round1_start = date(2026, 3, 1)
+    round1_end = date(2026, 3, 8)
+    if today < round1_start:
+        return 1
+    if round1_start <= today <= round1_end:
+        return 1
+
     monday = today - timedelta(days=today.weekday())
     sunday = monday + timedelta(days=6)
     
