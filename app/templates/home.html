@@ -64,6 +64,35 @@
         margin: 1rem auto 0;
       }
 
+      .fixture-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin: 0.5rem 0 1rem;
+      }
+
+      .fixture-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #000;
+        border-radius: 999px;
+        padding: 0.2rem 0.5rem;
+      }
+
+      .fixture-chip img {
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+      }
+
+      .fixture-vs {
+        font-weight: 700;
+        color: #444;
+      }
+
       .chat-box {
         background-color: #f1f1f1;
         color: black;
@@ -333,6 +362,17 @@
 
       {% if current_user.is_authenticated %}
       <div class="chat-container">
+        {% if round_number and fixtures %}
+        <div class="fixture-strip">
+          {% for fixture in fixtures %}
+            <div class="fixture-chip">
+              <img src="{{ team_logos[fixture.home_team] }}" alt="{{ fixture.home_team }} logo" title="{{ fixture.home_team }}">
+              <span class="fixture-vs">vs</span>
+              <img src="{{ team_logos[fixture.away_team] }}" alt="{{ fixture.away_team }} logo" title="{{ fixture.away_team }}">
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
         <h3 class="mb-3 text-center text-white">Community Chat</h3>
         {% if round_number %}
         <div class="chat-box" id="chat-box">
