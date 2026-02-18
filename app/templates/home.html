@@ -329,6 +329,7 @@
         </div>
 
         <div class="d-flex justify-content-center flex-wrap my-2">
+          <a href="#" class="btn btn-outline-light m-2">🤖 Stats (🔥New!🔥)</a>
           <a
             href="{{ url_for('leaderboard.leaderboard') }}"
             class="btn btn-outline-light m-2"
@@ -351,6 +352,9 @@
           <a href="{{ url_for('main.logout') }}" class="btn btn-secondary m-2"
             >Logout</a
           >
+        </div>
+        <div class="text-center text-white mt-2 hero-title">
+          Round {{ round_number }}
         </div>
 
         {% else %}
