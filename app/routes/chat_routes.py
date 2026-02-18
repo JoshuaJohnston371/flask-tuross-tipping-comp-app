@@ -2,63 +2,43 @@
 
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from datetime import datetime, timedelta, date
-from app.models import db, FixtureFree, ChatMessage
+from datetime import datetime
+from app.models import db, ChatMessage
 from app.services.fixtures import find_current_round
-import pytz
 
 chat_bp = Blueprint('chat', __name__)
-au_tz = pytz.timezone("Australia/Sydney")
-
-def is_chat_open(match):
-    """Returns True if chat is open (30 mins before kickoff to midnight of match day)."""
-    if not match or not match.time:
-        return False
-
-    datetime_now = datetime.now(au_tz)
-
-    date_now = datetime_now.date()
-    time_now = datetime_now.replace(second=0, microsecond=0).time()
-    now = datetime.combine(date_now, time_now)
-
-    kickoff_time = match.time
-    kickoff_date = match.date
-    kickoff_datetime = datetime.combine(kickoff_date, kickoff_time)
-    start_window = kickoff_datetime - timedelta(minutes=30)
-    end_window = kickoff_datetime.replace(hour=23, minute=59, second=59)
-    return start_window <= now <= end_window
 
 @chat_bp.route('/chat', methods=["GET"])
 @login_required
 def chat():
-    matches = FixtureFree.query.filter_by(round=find_current_round()).all()
-    selected_match = matches[0] if matches else None
-
+    round_number = find_current_round()
     chat_messages = []
-    if selected_match:
-        chat_messages = ChatMessage.query.filter_by(match_id=selected_match.match_id).order_by(ChatMessage.timestamp.asc()).all()
+    if round_number:
+        chat_messages = (
+            ChatMessage.query.filter_by(round_number=round_number)
+            .order_by(ChatMessage.timestamp.asc())
+            .all()
+        )
 
     return render_template(
         "chat.html",
-        selected_match=selected_match,
+        round_number=round_number,
         chat_messages=chat_messages,
-        chat_open=True,
+        chat_open=bool(round_number),
     )
 
 @chat_bp.route('/chat/post_message', methods=["POST"])
 @login_required
 def post_message():
-    match_id = request.form.get("match_id")
+    round_number = request.form.get("round_number", type=int) or find_current_round()
     message = request.form.get("message", "").strip()
 
-    match = FixtureFree.query.filter(FixtureFree.match_id==match_id)
-    #if not match or not is_chat_open(match):
-    #    return jsonify({"error": "Chat is currently closed."}), 403
-    print(f"HERE!!! MESSAGE: {message}")
+    if not round_number:
+        return jsonify({"error": "Chat is unavailable until fixtures are loaded."}), 400
     if message:
         new_msg = ChatMessage(
             user_id=current_user.id,
-            match_id=match_id,
+            round_number=round_number,
             message=message,
             timestamp=datetime.utcnow()
         )
@@ -78,13 +58,11 @@ def post_message():
 @chat_bp.route('/chat/messages')
 @login_required
 def get_messages():
-    match_id = request.args.get("match_id")
-    match = FixtureFree.query.filter(FixtureFree.match_id==match_id)
+    round_number = request.args.get("round_number", type=int) or find_current_round()
+    if not round_number:
+        return jsonify({"error": "Chat is unavailable until fixtures are loaded."}), 400
 
-    if not match:
-        return jsonify({"error": "Invalid match."}), 400
-
-    messages = ChatMessage.query.filter_by(match_id=match_id).order_by(ChatMessage.timestamp.asc()).all()
+    messages = ChatMessage.query.filter_by(round_number=round_number).order_by(ChatMessage.timestamp.asc()).all()
     
     result = [{
         "username": msg.user.username,

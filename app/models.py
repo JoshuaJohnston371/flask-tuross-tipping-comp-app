@@ -81,7 +81,7 @@ class UserTipStats(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    round_number = db.Column(db.Integer, nullable=False)
+    round_number = db.Column(db.Integer, nullable=True)
     successful_tips = db.Column(db.Integer, default=0)
     failed_tips = db.Column(db.Integer, default=0)
     pending_tips = db.Column(db.Integer, default=0)
@@ -93,7 +93,8 @@ class ChatMessage(db.Model):
     __tablename__ = 'chat_messages'
     id = db.Column(db.Integer, primary_key = True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    match_id = db.Column(db.String, db.ForeignKey("fixture_free.match_id"), nullable=False)
+    round_number = db.Column(db.Integer, nullable=False)
+    match_id = db.Column(db.String, db.ForeignKey("fixture_free.match_id"), nullable=True)
     message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(au_tz))
     

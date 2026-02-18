@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required, logout_user, current_user
-from app.models import FixtureFree, ChatMessage
+from app.models import ChatMessage
 from app.services.fixtures import find_current_round
 from app.utils.helper_functions import get_user_rank
 from datetime import datetime
@@ -14,15 +14,13 @@ def home():
     # if not current_user.is_authenticated:
     #     return redirect(url_for('auth.register'))
     round_number = find_current_round()
-    matches = FixtureFree.query.filter_by(round=round_number).order_by(FixtureFree.date).all()
-    selected_match = matches[0] if matches else None
     rank = None
     if current_user.is_authenticated:
         rank = get_user_rank(current_user.username)
     chat_messages = []
-    if selected_match:
+    if round_number:
         chat_messages = (
-            ChatMessage.query.filter_by(match_id=selected_match.match_id)
+            ChatMessage.query.filter_by(round_number=round_number)
             .order_by(ChatMessage.timestamp.asc())
             .all()
         )
@@ -31,9 +29,8 @@ def home():
         current_year=datetime.now().year,
         rank=rank,
         round_number=round_number,
-        selected_match=selected_match,
         chat_messages=chat_messages,
-        chat_open=True,
+        chat_open=bool(round_number),
     )
 
 @main_bp.route('/logout')

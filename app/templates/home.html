@@ -334,7 +334,7 @@
       {% if current_user.is_authenticated %}
       <div class="chat-container">
         <h3 class="mb-3 text-center text-white">Community Chat</h3>
-        {% if selected_match %}
+        {% if round_number %}
         <div class="chat-box" id="chat-box">
           {% for msg in chat_messages %}
             <div class="chat-message">
@@ -347,7 +347,7 @@
         {% if chat_open %}
         <div class="chat-input">
           <form id="chat-form">
-            <input type="hidden" name="match_id" value="{{ selected_match.match_id }}">
+            <input type="hidden" name="round_number" value="{{ round_number }}">
             <input type="text" name="message" id="message" placeholder="Type your message..." required>
             <button type="submit" class="btn btn-primary">Send</button>
           </form>
@@ -373,7 +373,7 @@
     <script>
       const chatBox = document.getElementById("chat-box");
       const form = document.getElementById("chat-form");
-      const matchId = "{{ selected_match.match_id if selected_match else '' }}";
+      const roundNumber = "{{ round_number if round_number else '' }}";
 
       function scrollChatToBottom() {
         if (chatBox) {
@@ -382,10 +382,10 @@
       }
 
       function loadMessages() {
-        if (!matchId) {
+        if (!roundNumber) {
           return;
         }
-        fetch(`/chat/messages?match_id=${matchId}`)
+        fetch(`/chat/messages?round_number=${roundNumber}`)
           .then(response => response.json())
           .then(data => {
             if (data.messages && chatBox) {
