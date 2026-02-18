@@ -13,7 +13,7 @@
     />
     <style>
       body {
-        background: url("{{ url_for('static', filename='backgrounds/fight.jpg')}}") no-repeat center center fixed;
+        background: url("{% if current_user.is_authenticated %}{{ url_for('static', filename='backgrounds/background_image_1.jpg')}}{% else %}{{ url_for('static', filename='backgrounds/fight.jpg')}}{% endif %}") no-repeat center center fixed;
         background-size: cover;
         background-position: center;
         color: #fff;
@@ -362,7 +362,7 @@
             >Register</a
           > #}
         </div>
-        <p class="text-center text-white">"Bitches!"</p>
+        <p class="text-center text-danger">"Bitches!"</p>
         {% endif %}
       </div>
 
