@@ -160,6 +160,12 @@
         object-fit: contain;
       }
 
+      .tip-selected {
+        border: 2px solid #dc3545;
+        border-radius: 50%;
+        padding: 2px;
+      }
+
       .fixture-vs {
         font-weight: 700;
         color: #444;
@@ -446,9 +452,19 @@
           {% for fixture in fixtures %}
             <div class="fixture-item">
               <div class="fixture-chip">
-                <img src="{{ team_logos[fixture.home_team] }}" alt="{{ fixture.home_team }} logo" title="{{ fixture.home_team }}">
+                <img
+                  src="{{ team_logos[fixture.home_team] }}"
+                  alt="{{ fixture.home_team }} logo"
+                  title="{{ fixture.home_team }}"
+                  class="{% if tip_map.get(fixture.match_id) == fixture.home_team %}tip-selected{% endif %}"
+                >
                 <span class="fixture-vs">vs</span>
-                <img src="{{ team_logos[fixture.away_team] }}" alt="{{ fixture.away_team }} logo" title="{{ fixture.away_team }}">
+                <img
+                  src="{{ team_logos[fixture.away_team] }}"
+                  alt="{{ fixture.away_team }} logo"
+                  title="{{ fixture.away_team }}"
+                  class="{% if tip_map.get(fixture.match_id) == fixture.away_team %}tip-selected{% endif %}"
+                >
               </div>
               {% if fixture.date and fixture.time %}
                 <div class="fixture-time">

@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required, logout_user, current_user
-from app.models import ChatMessage, FixtureFree
+from app.models import ChatMessage, FixtureFree, Tip
 from app.services.fixtures import find_current_round
 from app.utils.helper_functions import get_user_rank
 from app.utils.team_logos import TEAM_LOGOS
@@ -22,9 +22,14 @@ def home():
         if round_number
         else []
     )
+    match_ids = [f.match_id for f in fixtures]
     rank = None
+    tips = []
     if current_user.is_authenticated:
         rank = get_user_rank(current_user.username)
+        if match_ids:
+            tips = Tip.query.filter(Tip.user_id == current_user.id, Tip.match.in_(match_ids)).all()
+    tip_map = {tip.match: tip.selected_team for tip in tips}
     chat_messages = []
     if round_number:
         chat_messages = (
@@ -39,6 +44,7 @@ def home():
         round_number=round_number,
         fixtures=fixtures,
         team_logos=TEAM_LOGOS,
+        tip_map=tip_map,
         chat_messages=chat_messages,
         chat_open=bool(round_number),
     )
