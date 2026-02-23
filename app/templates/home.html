@@ -83,11 +83,26 @@
       .fixture-chip {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 0.35rem;
         background-color: rgba(255, 255, 255, 0.9);
         color: #000;
         border-radius: 999px;
         padding: 0.2rem 0.5rem;
+      }
+
+      .fixture-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .fixture-time {
+        margin-top: 0.25rem;
+        font-size: 0.65rem;
+        color: #fff;
+        text-align: center;
+        line-height: 1.1;
       }
 
       .fixture-chip img {
@@ -247,6 +262,27 @@
           width: 45px;
           height: 45px;
         }
+        .fixture-strip {
+          gap: 0.6rem;
+        }
+
+        .fixture-item {
+          width: calc(33.333% - 0.6rem);
+        }
+
+        .fixture-chip {
+          width: 100%;
+          padding: 0.35rem 0.4rem;
+        }
+
+        .fixture-chip img {
+          width: 28px;
+          height: 28px;
+        }
+
+        .fixture-time {
+          font-size: 0.6rem;
+        }
 
         .tip-logo {
           width: 32px;
@@ -375,10 +411,17 @@
         {% if round_number and fixtures %}
         <div class="fixture-strip">
           {% for fixture in fixtures %}
-            <div class="fixture-chip">
-              <img src="{{ team_logos[fixture.home_team] }}" alt="{{ fixture.home_team }} logo" title="{{ fixture.home_team }}">
-              <span class="fixture-vs">vs</span>
-              <img src="{{ team_logos[fixture.away_team] }}" alt="{{ fixture.away_team }} logo" title="{{ fixture.away_team }}">
+            <div class="fixture-item">
+              <div class="fixture-chip">
+                <img src="{{ team_logos[fixture.home_team] }}" alt="{{ fixture.home_team }} logo" title="{{ fixture.home_team }}">
+                <span class="fixture-vs">vs</span>
+                <img src="{{ team_logos[fixture.away_team] }}" alt="{{ fixture.away_team }} logo" title="{{ fixture.away_team }}">
+              </div>
+              {% if fixture.date and fixture.time %}
+                <div class="fixture-time">
+                  {{ fixture.date.strftime('%a %d') }} {{ fixture.time.strftime('%I:%M%p') }}
+                </div>
+              {% endif %}
             </div>
           {% endfor %}
         </div>
