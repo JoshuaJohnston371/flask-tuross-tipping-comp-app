@@ -7,8 +7,10 @@ from app.services.fixtures import find_current_round
 from app.utils.helper_functions import get_user_rank
 from app.utils.team_logos import TEAM_LOGOS
 from datetime import datetime
+import pytz
 
 main_bp = Blueprint('main', __name__)
+SYDNEY_TZ = pytz.timezone("Australia/Sydney")
 
 @main_bp.route('/')
 def home():
@@ -37,6 +39,12 @@ def home():
             .order_by(ChatMessage.timestamp.asc())
             .all()
         )
+        for msg in chat_messages:
+            if msg.timestamp is not None:
+                ts = msg.timestamp
+                if ts.tzinfo is None:
+                    ts = pytz.utc.localize(ts)
+                msg.display_time = ts.astimezone(SYDNEY_TZ).strftime("%H:%M")
     return render_template(
         'home.html',
         current_year=datetime.now().year,

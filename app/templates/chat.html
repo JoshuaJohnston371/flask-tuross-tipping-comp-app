@@ -16,8 +16,8 @@
   }
 
   .chat-avatar {
-    width: 30px;
-    height: 30px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     vertical-align: middle;
     margin-right: 8px;
@@ -95,7 +95,7 @@
     <div class="chat-box" id="chat-box">
       {% for msg in chat_messages %}
         <div class="chat-message">
-          <strong>{{ msg.user.username }}</strong> [{{ msg.timestamp.strftime('%H:%M') }}]: {{ msg.message }}
+          <strong>{{ msg.user.username }}</strong> [{{ msg.display_time or msg.timestamp.strftime('%H:%M') }}]: {{ msg.message }}
         </div>
       {% endfor %}
     </div>

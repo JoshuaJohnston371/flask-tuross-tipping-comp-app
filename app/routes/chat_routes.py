@@ -3,10 +3,19 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime
+import pytz
 from app.models import db, ChatMessage
 from app.services.fixtures import find_current_round
 
 chat_bp = Blueprint('chat', __name__)
+SYDNEY_TZ = pytz.timezone("Australia/Sydney")
+
+def format_sydney_time(timestamp):
+    if timestamp is None:
+        return ""
+    if timestamp.tzinfo is None:
+        timestamp = pytz.utc.localize(timestamp)
+    return timestamp.astimezone(SYDNEY_TZ).strftime("%H:%M")
 
 @chat_bp.route('/chat', methods=["GET"])
 @login_required
@@ -19,6 +28,8 @@ def chat():
             .order_by(ChatMessage.timestamp.asc())
             .all()
         )
+        for msg in chat_messages:
+            msg.display_time = format_sydney_time(msg.timestamp)
 
     return render_template(
         "chat.html",
@@ -50,7 +61,7 @@ def post_message():
             "username": current_user.username,
             "avatar": avatar_url,
             "message": new_msg.message,
-            "timestamp": new_msg.timestamp.strftime("%H:%M")
+            "timestamp": format_sydney_time(new_msg.timestamp)
         })
 
     return jsonify({"error": "Empty message."}), 400
@@ -68,7 +79,7 @@ def get_messages():
         "username": msg.user.username,
         "avatar": f"/static/avatars/{msg.user.avatar}",
         "message": msg.message,
-        "timestamp": msg.timestamp.strftime("%H:%M")
+        "timestamp": format_sydney_time(msg.timestamp)
     } for msg in messages]
 
     return jsonify({"messages": result})
