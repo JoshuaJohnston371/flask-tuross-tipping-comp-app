@@ -88,8 +88,8 @@
                 <td>{{ user.username }}</td>
                 <td>
                   {# ✅ CHANGED: Prevent viewing tips for current round if user hasn't submitted their own #}
-                  {% if selected_round == current_round and not after_5_thursday %}
-                    <em>View others tips after 5pm Thursday.</em>
+                  {% if visibility_message %}
+                    <em>{{ visibility_message }}</em>
                   {% elif tips_by_user[user.id] %}
                     {% for tip in tips_by_user[user.id] %}
                       {{ tip.selected_team }} →

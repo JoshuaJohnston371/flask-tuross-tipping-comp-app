@@ -2,9 +2,10 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.models import db, Tip, FixtureFree, User
 from app.utils.team_logos import TEAM_LOGOS
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from app.utils.helper_functions import get_all_rounds, is_past_thursday_5pm_aus
 from app.services.fixtures import find_current_round
+import pytz
 
 tip_bp = Blueprint('tip', __name__)
 
@@ -67,6 +68,9 @@ def submit_tip():
 def view_tips():
     selected_round = request.args.get("round", type=int)
     all_rounds = get_all_rounds()
+    sydney_tz = pytz.timezone("Australia/Sydney")
+    now = datetime.now(sydney_tz)
+    after_5_thursday = is_past_thursday_5pm_aus()
 
     if not selected_round:
         selected_round = find_current_round()
@@ -79,16 +83,46 @@ def view_tips():
         user.id: Tip.query.filter(Tip.user_id == user.id, Tip.match.in_(match_ids)).all()
         for user in users if user.username not in ['testing_db2']
     }
-    results_map = {match : FixtureFree.get_winning_team(match) for match in match_ids}
+    visibility_message = None
+    visible_match_ids = match_ids
+
+    #round 1 edge case 2026
+    if selected_round == 1:
+        round1_first_cutoff = sydney_tz.localize(datetime(2026, 2, 28, 17, 0, 0))
+        round1_cutoff = sydney_tz.localize(datetime(2026, 3, 5, 17, 0, 0))
+        if now < round1_first_cutoff:
+            visible_match_ids = []
+            visibility_message = "View others tips after 5pm Sat 28 Feb."
+        elif now < round1_cutoff:
+            visible_match_ids = [m for m in match_ids if m in ["1", "2", 1, 2]]
+            visibility_message = "Only matches 1-2 visible until 5pm Thu 5 Mar."
+        else:
+            visible_match_ids = match_ids
+    elif selected_round == find_current_round() and not after_5_thursday:
+        visible_match_ids = []
+        visibility_message = "View others tips after 5pm Thursday."
+
+    visible_fixtures = [f for f in fixtures if f.match_id in visible_match_ids]
+    results_map = {match: FixtureFree.get_winning_team(match) for match in visible_match_ids}
+
+    display_tips_by_user = {}
+    for user in users:
+        user_tips = tips_by_user.get(user.id, [])
+        if visible_match_ids:
+            user_tips = [t for t in user_tips if t.match in visible_match_ids]
+        else:
+            user_tips = []
+        display_tips_by_user[user.id] = user_tips
     
     return render_template(
         "view_tips.html",
         users=users,
-        tips_by_user=tips_by_user,
+        tips_by_user=display_tips_by_user,
         selected_round=selected_round,
         all_rounds=all_rounds,
-        fixtures=fixtures,
+        fixtures=visible_fixtures,
         results_map=results_map,
-        after_5_thursday= is_past_thursday_5pm_aus(), #dictate if user can see others tips
-        current_round=find_current_round()
+        after_5_thursday=after_5_thursday, #dictate if user can see others tips
+        current_round=find_current_round(),
+        visibility_message=visibility_message
     )
