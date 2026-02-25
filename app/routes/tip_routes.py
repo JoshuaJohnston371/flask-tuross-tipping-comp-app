@@ -108,10 +108,11 @@ def view_tips():
     display_tips_by_user = {}
     for user in users:
         user_tips = tips_by_user.get(user.id, [])
-        if visible_match_ids:
-            user_tips = [t for t in user_tips if t.match in visible_match_ids]
-        else:
-            user_tips = []
+        if user.id != current_user.id:
+            if visible_match_ids:
+                user_tips = [t for t in user_tips if t.match in visible_match_ids]
+            else:
+                user_tips = []
         display_tips_by_user[user.id] = user_tips
     
     return render_template(
