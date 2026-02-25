@@ -65,8 +65,8 @@
               {% if tips_by_user[current_user.id] %}
                 {% for tip in tips_by_user[current_user.id] %}
                   {{ tip.selected_team }} →
-                  {% if results_map[tip.match] is not none %}
-                    {% if tip.selected_team == results_map[tip.match] %}
+                  {% if results_map.get(tip.match) is not none %}
+                    {% if tip.selected_team == results_map.get(tip.match) %}
                       ✅<br>
                     {% else %}
                       ❌<br>
@@ -93,8 +93,8 @@
                   {% elif tips_by_user[user.id] %}
                     {% for tip in tips_by_user[user.id] %}
                       {{ tip.selected_team }} →
-                      {% if results_map[tip.match] is not none %}
-                        {% if tip.selected_team == results_map[tip.match] %}
+                      {% if results_map.get(tip.match) is not none %}
+                        {% if tip.selected_team == results_map.get(tip.match) %}
                           ✅<br>
                         {% else %}
                           ❌<br>
