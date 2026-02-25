@@ -12,31 +12,56 @@ tip_bp = Blueprint('tip', __name__)
 @tip_bp.route('/submit_tip', methods=['GET', 'POST'])
 @login_required
 def submit_tip():
-    today = date.today()
-    monday = today - timedelta(days=today.weekday())
-    sunday = monday + timedelta(days=6)
+    sydney_tz = pytz.timezone("Australia/Sydney")
+    now = datetime.now(sydney_tz)
+    current_round = find_current_round()
 
-    fixtures = FixtureFree.query.filter(FixtureFree.round==find_current_round()).all()
+    fixtures = FixtureFree.query.filter(FixtureFree.round == current_round).all()
     
-    match_ids = [f.match_id for f in fixtures]  # ✅ FIXED: use f.id not f.match_id
+    match_ids = [str(f.match_id) for f in fixtures]
     
     existing_tips = Tip.query.filter(Tip.user_id == current_user.id, Tip.match.in_(match_ids)).all()
-    has_submitted = len(existing_tips) == len(match_ids)
+    existing_match_ids = {str(t.match) for t in existing_tips}
+    has_submitted = set(match_ids).issubset(existing_match_ids)
+
+    required_match_ids = set(match_ids)
+    tips_closed = False
+    if current_round == 1:
+        round1_first_cutoff = sydney_tz.localize(datetime(2026, 2, 28, 17, 0, 0))
+        round1_cutoff = sydney_tz.localize(datetime(2026, 3, 5, 17, 0, 0))
+        if now >= round1_cutoff:
+            tips_closed = True
+        elif now < round1_first_cutoff:
+            required_match_ids = {m for m in match_ids if m in {"1", "2"}}
+        else:
+            required_match_ids = {m for m in match_ids if m not in {"1", "2"}}
+
+    visible_fixtures = [f for f in fixtures if str(f.match_id) in required_match_ids]
     
     if request.method == 'POST':
+        if tips_closed:
+            flash('Tip submissions for round 1 are now closed.', 'danger')
+            return redirect(url_for('main.home'))
         if has_submitted:
             flash('You have already submitted your tips.', 'warning')
             return redirect(url_for('main.home'))
 
-        for fixture in fixtures:
-            match_id = fixture.match_id
-            selected_team = request.form.get(f'team-input-{match_id}')  # ✅ Correct name
+        for fixture in visible_fixtures:
+            match_id = str(fixture.match_id)
+            if match_id in existing_match_ids:
+                continue
+            selected_team = request.form.get(f'team-input-{match_id}')
 
             if not selected_team:
                 flash('You must select a team for all matches.', 'danger')
                 return redirect(url_for('tip.submit_tip'))
 
-            new_tip = Tip(user_id=current_user.id, username=current_user.username, match=match_id, selected_team=selected_team)
+            new_tip = Tip(
+                user_id=current_user.id,
+                username=current_user.username,
+                match=match_id,
+                selected_team=selected_team
+            )
             db.session.add(new_tip)
 
         db.session.commit()
@@ -57,7 +82,7 @@ def submit_tip():
 
     return render_template(
         'submit_tip.html',
-        fixtures=fixtures,
+        fixtures=visible_fixtures,
         has_submitted=has_submitted,
         submitted_tips=submitted_tips,
         team_logos=TEAM_LOGOS
