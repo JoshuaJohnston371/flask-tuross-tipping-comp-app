@@ -88,9 +88,10 @@
                 <td>{{ user.username }}</td>
                 <td>
                   {# ✅ CHANGED: Prevent viewing tips for current round if user hasn't submitted their own #}
-                  {% if visibility_message %}
-                    <em>{{ visibility_message }}</em>
-                  {% elif tips_by_user[user.id] %}
+                  {% if tips_by_user[user.id] %}
+                    {% if visibility_message %}
+                      <em>{{ visibility_message }}</em><br>
+                    {% endif %}
                     {% for tip in tips_by_user[user.id] %}
                       {{ tip.selected_team }} →
                       {% if results_map.get(tip.match) is not none %}
@@ -103,6 +104,8 @@
                         ⏳<br>
                       {% endif %}
                     {% endfor %}
+                  {% elif visibility_message %}
+                    <em>{{ visibility_message }}</em>
                   {% else %}
                     No tips submitted.
                   {% endif %}
