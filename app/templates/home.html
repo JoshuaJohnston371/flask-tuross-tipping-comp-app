@@ -416,12 +416,11 @@
         <p class="text-center">Hello, {{ current_user.username }}!</p>
 
         <div class="nav-pill-group">
-          <a href="{{ url_for('tip.submit_tip') }}" class="nav-pill nav-pill-primary">Submit Tips</a>
+          <a href="{{ url_for('tip.submit_tip') }}" class="nav-pill nav-pill-primary">Submit Tips (NEW intelligence report 🔥)</a>
           <a href="{{ url_for('tip.view_tips') }}" class="nav-pill nav-pill-primary">View Tips</a>
         </div>
 
         <div class="nav-pill-group">
-          <a href="#" class="nav-pill">🤖 Stats (🔥New!🔥)</a>
           <a href="{{ url_for('leaderboard.leaderboard') }}" class="nav-pill">Leaderboard</a>
           <a href="{{ url_for('profile.profile') }}" class="nav-pill">Profile</a>
 
