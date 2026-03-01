@@ -139,7 +139,7 @@ def _build_report_for_fixture(fixture, search_count=10):
         "# ALWAYS OUTPUT YOUR REPORT WITH THE FOLLOWING HEADING STRUCTURE (IF DATA AVAILABLE)#"
         """
 ###🤖📊 Match Intelligence Report
-# Match Analysis Report: team 1 vs. team 2
+# Match: team 1 vs. team 2
 
 **Date:** 
 **Kick-off Time:** 
