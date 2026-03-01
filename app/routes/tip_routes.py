@@ -162,9 +162,12 @@ def tip_report(match_id):
     if match_id in REPORT_CACHE:
         return jsonify({"report": REPORT_CACHE[match_id], "cached": True})
 
-    report = generate_match_report(match_id)
+    try:
+        report = generate_match_report(match_id)
+    except Exception as exc:
+        return jsonify({"error": f"Report generation failed: {exc}"}), 503
     if not report:
-        return jsonify({"error": "Report not available."}), 404
+        return jsonify({"error": "Reports are unavailable right now."}), 503
 
     REPORT_CACHE[match_id] = report
     return jsonify({"report": report, "cached": False})

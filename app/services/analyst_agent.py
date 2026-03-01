@@ -234,6 +234,8 @@ Punter recommendation:
     return report
 
 def generate_match_report(match_id, search_count=10):
+    if not OPENAI_API_KEY:
+        return None
     app = create_app()
     with app.app_context():
         fixture = FixtureFree.query.filter_by(match_id=match_id).first()

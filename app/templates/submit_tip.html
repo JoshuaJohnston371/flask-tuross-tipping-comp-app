@@ -224,13 +224,14 @@
           const response = await fetch(collapseEl.dataset.reportUrl, {
             headers: { 'Accept': 'application/json' }
           });
-          if (!response.ok) {
-            throw new Error(`Report fetch failed: ${response.status}`);
-          }
           const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || `Report fetch failed: ${response.status}`);
+          }
           reportContent.textContent = data.report || 'Report not available right now.';
           reportContent.dataset.loaded = 'true';
         } catch (error) {
+          reportError.textContent = error.message || 'Report not available right now.';
           reportError.classList.remove('d-none');
         } finally {
           reportLoading.classList.add('d-none');
