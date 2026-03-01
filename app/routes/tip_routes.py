@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+import traceback
+from concurrent.futures import ThreadPoolExecutor
 from flask_login import login_required, current_user
 from app.models import db, Tip, FixtureFree, User
 from app.utils.team_logos import TEAM_LOGOS
@@ -10,6 +12,28 @@ import pytz
 
 tip_bp = Blueprint('tip', __name__)
 REPORT_CACHE = {}
+REPORT_JOBS = {}
+REPORT_ERRORS = {}
+REPORT_TRACEBACKS = {}
+REPORT_CANCELLED = set()
+REPORT_EXECUTOR = ThreadPoolExecutor(max_workers=1)
+
+def _generate_report_async(match_id):
+    try:
+        if match_id in REPORT_CANCELLED:
+            REPORT_CANCELLED.discard(match_id)
+            return
+        report = generate_match_report(match_id)
+        if not report:
+            REPORT_ERRORS[match_id] = "Report generation returned empty output."
+        else:
+            if match_id not in REPORT_CANCELLED:
+                REPORT_CACHE[match_id] = report
+    except Exception as exc:
+        REPORT_ERRORS[match_id] = f"{type(exc).__name__}: {exc}"
+        REPORT_TRACEBACKS[match_id] = traceback.format_exc()
+    finally:
+        REPORT_JOBS.pop(match_id, None)
 
 @tip_bp.route('/submit_tip', methods=['GET', 'POST'])
 @login_required
@@ -162,12 +186,26 @@ def tip_report(match_id):
     if match_id in REPORT_CACHE:
         return jsonify({"report": REPORT_CACHE[match_id], "cached": True})
 
-    try:
-        report = generate_match_report(match_id)
-    except Exception as exc:
-        return jsonify({"error": f"Report generation failed: {exc}"}), 503
-    if not report:
-        return jsonify({"error": "Reports are unavailable right now."}), 503
+    if match_id in REPORT_ERRORS:
+        return jsonify({
+            "error": REPORT_ERRORS[match_id],
+            "traceback": REPORT_TRACEBACKS.get(match_id)
+        }), 500
 
-    REPORT_CACHE[match_id] = report
-    return jsonify({"report": report, "cached": False})
+    if match_id not in REPORT_JOBS:
+        REPORT_ERRORS.pop(match_id, None)
+        REPORT_TRACEBACKS.pop(match_id, None)
+        REPORT_CANCELLED.discard(match_id)
+        REPORT_JOBS[match_id] = REPORT_EXECUTOR.submit(_generate_report_async, match_id)
+
+    return jsonify({"status": "pending"}), 202
+
+@tip_bp.route("/tip-report/<match_id>/cancel", methods=["POST"])
+@login_required
+def cancel_tip_report(match_id):
+    match_id = str(match_id)
+    REPORT_CANCELLED.add(match_id)
+    REPORT_JOBS.pop(match_id, None)
+    REPORT_ERRORS.pop(match_id, None)
+    REPORT_TRACEBACKS.pop(match_id, None)
+    return jsonify({"status": "cancelled"})

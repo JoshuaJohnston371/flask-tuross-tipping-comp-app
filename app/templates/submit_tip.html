@@ -132,6 +132,11 @@
                         <div class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></div>
                         <span>Loading report...</span>
                       </div>
+                      <div class="mt-2 d-none report-actions">
+                        <button class="btn btn-outline-secondary btn-sm w-100 report-cancel" type="button">
+                          Cancel
+                        </button>
+                      </div>
                       <div class="report-content"></div>
                       <div class="report-error d-none">Report not available right now.</div>
                     </div>
@@ -207,43 +212,116 @@
       document.getElementById('tip-form').submit();
     }
 
-    document.querySelectorAll('.report-collapse').forEach(collapseEl => {
-      collapseEl.addEventListener('show.bs.collapse', async () => {
-        const reportContent = collapseEl.querySelector('.report-content');
-        const reportLoading = collapseEl.querySelector('.report-loading');
-        const reportError = collapseEl.querySelector('.report-error');
-        if (reportContent.dataset.loaded === 'true') {
+    function scheduleReportPoll(collapseEl, delayMs = 2000) {
+      if (collapseEl._reportTimeout) {
+        clearTimeout(collapseEl._reportTimeout);
+      }
+      collapseEl._reportTimeout = setTimeout(() => {
+        fetchReport(collapseEl);
+      }, delayMs);
+    }
+
+    async function fetchReport(collapseEl) {
+      const reportContent = collapseEl.querySelector('.report-content');
+      const reportLoading = collapseEl.querySelector('.report-loading');
+      const reportError = collapseEl.querySelector('.report-error');
+      const reportActions = collapseEl.querySelector('.report-actions');
+      if (reportContent.dataset.loaded === 'true') {
+        return;
+      }
+
+      reportLoading.classList.remove('d-none');
+      reportError.classList.add('d-none');
+      reportActions.classList.remove('d-none');
+      reportContent.textContent = '';
+
+      try {
+        const controller = new AbortController();
+        if (collapseEl._reportAbort) {
+          collapseEl._reportAbort.abort();
+        }
+        collapseEl._reportAbort = controller;
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        const response = await fetch(collapseEl.dataset.reportUrl, {
+          headers: { 'Accept': 'application/json' },
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const contentType = response.headers.get('content-type') || '';
+        let data = null;
+
+        if (contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          throw new Error(text || `Report fetch failed: ${response.status}`);
+        }
+
+        if (response.status === 202) {
+          reportLoading.classList.remove('d-none');
+          scheduleReportPoll(collapseEl, 2000);
           return;
         }
 
-        reportLoading.classList.remove('d-none');
-        reportError.classList.add('d-none');
-        reportContent.textContent = '';
+        if (!response.ok) {
+          const details = data.traceback ? `\n\n${data.traceback}` : '';
+          throw new Error((data.error || `Report fetch failed: ${response.status}`) + details);
+        }
 
-        try {
-          const response = await fetch(collapseEl.dataset.reportUrl, {
-            headers: { 'Accept': 'application/json' }
-          });
-          const contentType = response.headers.get('content-type') || '';
-          let data = null;
+        reportContent.textContent = data.report || 'Report not available right now.';
+        reportContent.dataset.loaded = 'true';
+        reportActions.classList.add('d-none');
+      } catch (error) {
+        reportError.textContent = error.message || 'Report not available right now.';
+        reportError.classList.remove('d-none');
+        reportActions.classList.add('d-none');
+      } finally {
+        reportLoading.classList.add('d-none');
+      }
+    }
 
-          if (contentType.includes('application/json')) {
-            data = await response.json();
-          } else {
-            const text = await response.text();
-            throw new Error(text || `Report fetch failed: ${response.status}`);
+    document.querySelectorAll('.report-collapse').forEach(collapseEl => {
+      const cancelButton = collapseEl.querySelector('.report-cancel');
+      if (cancelButton) {
+        cancelButton.addEventListener('click', async () => {
+          if (collapseEl._reportTimeout) {
+            clearTimeout(collapseEl._reportTimeout);
+            collapseEl._reportTimeout = null;
           }
-
-          if (!response.ok) {
-            throw new Error(data.error || `Report fetch failed: ${response.status}`);
+          if (collapseEl._reportAbort) {
+            collapseEl._reportAbort.abort();
+            collapseEl._reportAbort = null;
           }
-          reportContent.textContent = data.report || 'Report not available right now.';
-          reportContent.dataset.loaded = 'true';
-        } catch (error) {
-          reportError.textContent = error.message || 'Report not available right now.';
-          reportError.classList.remove('d-none');
-        } finally {
+          try {
+            await fetch(`${collapseEl.dataset.reportUrl}/cancel`, {
+              method: 'POST',
+              headers: { 'Accept': 'application/json' }
+            });
+          } catch (error) {
+            // ignore cancel errors
+          }
+          const reportContent = collapseEl.querySelector('.report-content');
+          const reportLoading = collapseEl.querySelector('.report-loading');
+          const reportError = collapseEl.querySelector('.report-error');
+          const reportActions = collapseEl.querySelector('.report-actions');
           reportLoading.classList.add('d-none');
+          reportActions.classList.add('d-none');
+          reportError.classList.remove('d-none');
+          reportError.textContent = 'Report generation cancelled.';
+          reportContent.textContent = '';
+        });
+      }
+      collapseEl.addEventListener('show.bs.collapse', () => {
+        fetchReport(collapseEl);
+      });
+      collapseEl.addEventListener('hide.bs.collapse', () => {
+        if (collapseEl._reportTimeout) {
+          clearTimeout(collapseEl._reportTimeout);
+          collapseEl._reportTimeout = null;
+        }
+        if (collapseEl._reportAbort) {
+          collapseEl._reportAbort.abort();
+          collapseEl._reportAbort = null;
         }
       });
     });

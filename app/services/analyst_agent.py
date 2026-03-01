@@ -269,5 +269,5 @@ def run_picker_agent(match_selected=None):
         
 
 if __name__ == "__main__":
-    match_id_subset = [1,2]
+    match_id_subset = [1]
     run_picker_agent(match_id_subset)
