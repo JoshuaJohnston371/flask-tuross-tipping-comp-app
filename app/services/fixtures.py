@@ -6,7 +6,6 @@ from app.models import Fixture, FixtureFree, db, User, UserTipStats, Tip
 from app import create_app 
 from datetime import datetime, date, timedelta
 import pytz
-import json
 
 # Load environment variables
 load_dotenv()
@@ -158,7 +157,7 @@ def update_user_tip_stats():
     users = User.query.all()
 
     for user in users:
-        for round_number in range(1, find_current_round() + 1):  # Start from round 11, this is first round of non-manual tip stats
+        for round_number in range(1, find_current_round() + 1): 
             round_results = get_user_round_results(user.id, round_number)
 
             stat = UserTipStats.query.filter_by(user_id=user.id, round_number=round_number).first()
@@ -177,7 +176,6 @@ def update_user_tip_stats():
                 db.session.add(stat)
     db.session.commit()
     
-# --- Main function to run all tasks ---
 def main():
     app = create_app()
     with app.app_context():
@@ -188,9 +186,3 @@ def main():
         update_user_tip_stats()
 
         print("Done.")
-
-# --- Entry point for cron job ---
-if __name__ == "__main__":
-    #main()
-    fixtures = get_free_nrl_fixtures()
-    print(json.dumps(fixtures[0], indent=2))
