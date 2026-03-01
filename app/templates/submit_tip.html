@@ -22,6 +22,23 @@
       font-size: 0.9rem;
       font-weight: 500;
     }
+    .report-body {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: left;
+      font-size: 0.9rem;
+      max-height: 60vh;
+      overflow-y: auto;
+      border: 1px solid #e3e3e3;
+    }
+    .report-content {
+      white-space: pre-wrap;
+    }
+    .report-loading,
+    .report-error {
+      color: #6c757d;
+    }
     @media (max-width: 576px) {
       .team-logo {
         width: 50px;
@@ -97,6 +114,29 @@
                 </div>
 
                 <input type="hidden" name="team-input-{{ fixture.match_id }}" id="team-input-{{ fixture.match_id }}">
+
+                <div class="mt-3">
+                  <button class="btn btn-outline-primary btn-sm w-100 report-toggle"
+                          type="button"
+                          data-bs-toggle="collapse"
+                          data-bs-target="#report-{{ fixture.match_id }}"
+                          aria-expanded="false"
+                          aria-controls="report-{{ fixture.match_id }}">
+                    Intelligence Report
+                  </button>
+                  <div class="collapse mt-3 report-collapse"
+                       id="report-{{ fixture.match_id }}"
+                       data-report-url="{{ url_for('tip.tip_report', match_id=fixture.match_id) }}">
+                    <div class="report-body">
+                      <div class="report-loading d-flex align-items-center gap-2">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></div>
+                        <span>Loading report...</span>
+                      </div>
+                      <div class="report-content"></div>
+                      <div class="report-error d-none">Report not available right now.</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           {% endfor %}
@@ -166,6 +206,37 @@
     function submitForm() {
       document.getElementById('tip-form').submit();
     }
+
+    document.querySelectorAll('.report-collapse').forEach(collapseEl => {
+      collapseEl.addEventListener('show.bs.collapse', async () => {
+        const reportContent = collapseEl.querySelector('.report-content');
+        const reportLoading = collapseEl.querySelector('.report-loading');
+        const reportError = collapseEl.querySelector('.report-error');
+        if (reportContent.dataset.loaded === 'true') {
+          return;
+        }
+
+        reportLoading.classList.remove('d-none');
+        reportError.classList.add('d-none');
+        reportContent.textContent = '';
+
+        try {
+          const response = await fetch(collapseEl.dataset.reportUrl, {
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!response.ok) {
+            throw new Error(`Report fetch failed: ${response.status}`);
+          }
+          const data = await response.json();
+          reportContent.textContent = data.report || 'Report not available right now.';
+          reportContent.dataset.loaded = 'true';
+        } catch (error) {
+          reportError.classList.remove('d-none');
+        } finally {
+          reportLoading.classList.add('d-none');
+        }
+      });
+    });
   </script>
 </body>
 </html>

@@ -1,13 +1,15 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app.models import db, Tip, FixtureFree, User
 from app.utils.team_logos import TEAM_LOGOS
 from datetime import date, datetime, timedelta
 from app.utils.helper_functions import get_all_rounds, is_past_thursday_5pm_aus
 from app.services.fixtures import find_current_round
+from app.services.analyst_agent import generate_match_report
 import pytz
 
 tip_bp = Blueprint('tip', __name__)
+REPORT_CACHE = {}
 
 @tip_bp.route('/submit_tip', methods=['GET', 'POST'])
 @login_required
@@ -152,3 +154,16 @@ def view_tips():
         current_round=find_current_round(),
         visibility_message=visibility_message
     )
+
+@tip_bp.route("/tip-report/<int:match_id>")
+@login_required
+def tip_report(match_id):
+    if match_id in REPORT_CACHE:
+        return jsonify({"report": REPORT_CACHE[match_id], "cached": True})
+
+    report = generate_match_report(match_id)
+    if not report:
+        return jsonify({"error": "Report not available."}), 404
+
+    REPORT_CACHE[match_id] = report
+    return jsonify({"report": report, "cached": False})
