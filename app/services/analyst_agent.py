@@ -139,61 +139,37 @@ def _build_report_for_fixture(fixture, search_count=10):
         "# ALWAYS OUTPUT YOUR REPORT WITH THE FOLLOWING HEADING STRUCTURE (IF DATA AVAILABLE)#"
         """
 ###🤖📊 Match Intelligence Report
-# Match: team 1 vs. team 2
+#### Match: team 1 vs. team 2
 
 **Date:** 
 **Kick-off Time:** 
 **Venue:** 
-
 ---
-
-## TAB Betting Odds
+#### TAB Betting Odds
 - **Head-to-Head:**
-  
 - **Line Bet:**
-
 - **Total Points Over/Under:**
-
 ---
-
-## Key Players Unavailable
+#### Key Players Unavailable
 - **team 1**
-
 - **team 2
-
 ---
-
-## Key Players Available
+#### Key Players Available
 - **team 1**
-
 - **team 2
-
 ---
-
-
-## Recent Performance Stats
-
+#### Recent Performance Stats
 ---
-
-## Recent Form
+#### Recent Form
 - **team 1**
-
 - **team 2**
-
 ---
-
-## Commentators' Opinions
-
+#### Commentators' Opinions
 ---
-
-## Summary of Key Factors
-
+#### Summary of Key Factors
 ---
-
-## Conclusion
-
-### Predicted Winning Odds:
-
+#### Conclusion
+#### Predicted Winning Odds:
 Punter recommendation: 
                 """
     )
