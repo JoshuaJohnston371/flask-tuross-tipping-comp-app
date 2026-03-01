@@ -224,7 +224,16 @@
           const response = await fetch(collapseEl.dataset.reportUrl, {
             headers: { 'Accept': 'application/json' }
           });
-          const data = await response.json();
+          const contentType = response.headers.get('content-type') || '';
+          let data = null;
+
+          if (contentType.includes('application/json')) {
+            data = await response.json();
+          } else {
+            const text = await response.text();
+            throw new Error(text || `Report fetch failed: ${response.status}`);
+          }
+
           if (!response.ok) {
             throw new Error(data.error || `Report fetch failed: ${response.status}`);
           }
