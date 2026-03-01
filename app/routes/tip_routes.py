@@ -155,9 +155,10 @@ def view_tips():
         visibility_message=visibility_message
     )
 
-@tip_bp.route("/tip-report/<int:match_id>")
+@tip_bp.route("/tip-report/<match_id>")
 @login_required
 def tip_report(match_id):
+    match_id = str(match_id)
     if match_id in REPORT_CACHE:
         return jsonify({"report": REPORT_CACHE[match_id], "cached": True})
 
