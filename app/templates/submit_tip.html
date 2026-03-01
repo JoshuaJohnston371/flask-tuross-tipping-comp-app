@@ -54,7 +54,13 @@
 </head>
 <body class="p-3">
   <div class="container">
-    <h2 class="text-center mb-4">Submit Your Tips - Round Fixtures</h2>
+    <h2 class="text-center mb-2">Submit Your Tips - Round Fixtures</h2>
+    <div class="text-center mb-2">
+      <strong>Round {{ current_round }}</strong>
+    </div>
+    <p class="text-center text-danger mb-4">
+      Click "Create Intelligence Report" to build an analysis report for the match, may take a minute to generate.
+    </p>
 
     {% if has_submitted %}
       <div class="alert alert-info text-center">

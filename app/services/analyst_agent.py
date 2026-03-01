@@ -137,7 +137,7 @@ def _build_report_for_fixture(fixture, search_count=10):
         "- Make statistics clear and consise, dont bury statistics in paragraphs, example: "
         "   - TAB ODDS: Dragons paying $2.40, Tigers paying $1.30"
 
-        "# ALWAYS OUTPUT YOUR REPORT WITH THE FOLLOWING HEADING STRUCTURE IN MARKDOWN (IF DATA AVAILABLE)#"
+        "# ALWAYS OUTPUT YOUR REPORT WITH THE FOLLOWING HEADING STRUCTURE IN MARKDOWN (IF DATA AVAILABLE) #"
         """
 ##🤖📊 Match Intelligence Report
 ### Match: team 1 vs. team 2

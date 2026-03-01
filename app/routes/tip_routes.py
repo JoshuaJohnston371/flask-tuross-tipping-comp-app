@@ -134,7 +134,8 @@ def submit_tip():
         has_submitted=has_submitted,
         submitted_tips=submitted_tips,
         team_logos=TEAM_LOGOS,
-        report_match_ids=report_match_ids
+        report_match_ids=report_match_ids,
+        current_round=current_round
     )
 
 @tip_bp.route("/view-tips")
