@@ -131,11 +131,11 @@ def _build_report_for_fixture(fixture, search_count=10):
         "- Predicted winning odds"
 
         "# OUTPUT FORMAT #"
+        "You output succinct markdown that follows the below heading form. Dont create any unnecessary space, make it a tight nice looking report"
         "- Make sure your report is well structured and easy to read. Assume your audience is NRL punters that are doing research on who they should bet on"
         "- The audience you are presenting to ar between 50 - 60 years old so they will appriciate clarity and not word heavy paragraphs"
         "- Make statistics clear and consise, dont bury statistics in paragraphs, example: "
         "   - TAB ODDS: Dragons paying $2.40, Tigers paying $1.30"
-        "You output succinct markdown that follows the below heading form. Dont create any unnecessary space, make it a tight nice looking report"
 
         "# ALWAYS OUTPUT YOUR REPORT WITH THE FOLLOWING HEADING STRUCTURE IN MARKDOWN (IF DATA AVAILABLE)#"
         """

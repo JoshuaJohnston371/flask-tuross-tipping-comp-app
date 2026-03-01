@@ -122,11 +122,16 @@
                           data-bs-target="#report-{{ fixture.match_id }}"
                           aria-expanded="false"
                           aria-controls="report-{{ fixture.match_id }}">
-                    Intelligence Report
+                    {% if report_match_ids and (fixture.match_id|string) in report_match_ids %}
+                      Show report
+                    {% else %}
+                      Create Intelligence Report
+                    {% endif %}
                   </button>
                   <div class="collapse mt-3 report-collapse"
                        id="report-{{ fixture.match_id }}"
-                       data-report-url="{{ url_for('tip.tip_report', match_id=fixture.match_id) }}">
+                       data-report-url="{{ url_for('tip.tip_report', match_id=fixture.match_id) }}"
+                       data-has-report="{% if report_match_ids and (fixture.match_id|string) in report_match_ids %}true{% else %}false{% endif %}">
                     <div class="report-body">
                       <div class="report-loading d-flex align-items-center gap-2">
                         <div class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></div>
@@ -214,6 +219,26 @@
       document.getElementById('tip-form').submit();
     }
 
+    function updateReportToggle(collapseEl, state) {
+      const toggleButton = collapseEl.closest('.card').querySelector('.report-toggle');
+      if (!toggleButton) {
+        return;
+      }
+      if (state === 'creating') {
+        toggleButton.textContent = 'Generating report...';
+        toggleButton.disabled = true;
+      } else if (state === 'open') {
+        toggleButton.textContent = 'Close report';
+        toggleButton.disabled = false;
+      } else if (state === 'closed') {
+        toggleButton.textContent = 'Show report';
+        toggleButton.disabled = false;
+      } else {
+        toggleButton.textContent = 'Create Intelligence Report';
+        toggleButton.disabled = false;
+      }
+    }
+
     function scheduleReportPoll(collapseEl, delayMs = 2000) {
       if (collapseEl._reportTimeout) {
         clearTimeout(collapseEl._reportTimeout);
@@ -236,6 +261,7 @@
       reportLoading.classList.remove('d-none');
       reportError.classList.add('d-none');
       reportActions.classList.remove('d-none');
+      updateReportToggle(collapseEl, 'creating');
       reportContent.textContent = '';
 
       try {
@@ -263,6 +289,7 @@
         if (response.status === 202) {
           isPending = true;
           reportLoading.classList.remove('d-none');
+          updateReportToggle(collapseEl, 'creating');
           scheduleReportPoll(collapseEl, 2000);
           return;
         }
@@ -276,11 +303,14 @@
         const rendered = window.marked ? window.marked.parse(markdown) : markdown;
         reportContent.innerHTML = window.DOMPurify ? window.DOMPurify.sanitize(rendered) : rendered;
         reportContent.dataset.loaded = 'true';
+        collapseEl.dataset.hasReport = 'true';
         reportActions.classList.add('d-none');
+        updateReportToggle(collapseEl, 'open');
       } catch (error) {
         reportError.textContent = error.message || 'Report not available right now.';
         reportError.classList.remove('d-none');
         reportActions.classList.add('d-none');
+        updateReportToggle(collapseEl, 'default');
       } finally {
         if (!isPending) {
           reportLoading.classList.add('d-none');
@@ -289,6 +319,9 @@
     }
 
     document.querySelectorAll('.report-collapse').forEach(collapseEl => {
+      if (collapseEl.dataset.hasReport === 'true') {
+        updateReportToggle(collapseEl, 'closed');
+      }
       const cancelButton = collapseEl.querySelector('.report-cancel');
       if (cancelButton) {
         cancelButton.addEventListener('click', async () => {
@@ -317,6 +350,7 @@
           reportError.classList.remove('d-none');
           reportError.textContent = 'Report generation cancelled.';
           reportContent.textContent = '';
+          updateReportToggle(collapseEl, 'default');
         });
       }
       collapseEl.addEventListener('show.bs.collapse', () => {
@@ -330,6 +364,11 @@
         if (collapseEl._reportAbort) {
           collapseEl._reportAbort.abort();
           collapseEl._reportAbort = null;
+        }
+        if (collapseEl.dataset.hasReport === 'true') {
+          updateReportToggle(collapseEl, 'closed');
+        } else {
+          updateReportToggle(collapseEl, 'default');
         }
       });
     });

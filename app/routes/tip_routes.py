@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from flask_login import login_required, current_user
-from app.models import db, Tip, FixtureFree, User
+from app.models import db, Tip, FixtureFree, User, TipIntelligenceReport
 from app.utils.team_logos import TEAM_LOGOS
 from datetime import date, datetime, timedelta
 from app.utils.helper_functions import get_all_rounds, is_past_thursday_5pm_aus
@@ -18,22 +18,38 @@ REPORT_TRACEBACKS = {}
 REPORT_CANCELLED = set()
 REPORT_EXECUTOR = ThreadPoolExecutor(max_workers=1)
 
-def _generate_report_async(match_id):
+def _report_key(user_id, match_id):
+    return f"{user_id}:{match_id}"
+
+def _generate_report_async(app, user_id, match_id, round_number, cache_key):
     try:
-        if match_id in REPORT_CANCELLED:
-            REPORT_CANCELLED.discard(match_id)
+        if cache_key in REPORT_CANCELLED:
+            REPORT_CANCELLED.discard(cache_key)
             return
-        report = generate_match_report(match_id)
-        if not report:
-            REPORT_ERRORS[match_id] = "Report generation returned empty output."
-        else:
-            if match_id not in REPORT_CANCELLED:
-                REPORT_CACHE[match_id] = report
+        with app.app_context():
+            report = generate_match_report(match_id)
+            if not report:
+                REPORT_ERRORS[cache_key] = "Report generation returned empty output."
+            else:
+                if cache_key not in REPORT_CANCELLED:
+                    REPORT_CACHE[cache_key] = report
+                    existing = TipIntelligenceReport.query.filter_by(
+                        user_id=user_id,
+                        match_id=match_id
+                    ).first()
+                    if not existing:
+                        db.session.add(TipIntelligenceReport(
+                            user_id=user_id,
+                            match_id=match_id,
+                            round_number=round_number,
+                            report_content=report
+                        ))
+                        db.session.commit()
     except Exception as exc:
-        REPORT_ERRORS[match_id] = f"{type(exc).__name__}: {exc}"
-        REPORT_TRACEBACKS[match_id] = traceback.format_exc()
+        REPORT_ERRORS[cache_key] = f"{type(exc).__name__}: {exc}"
+        REPORT_TRACEBACKS[cache_key] = traceback.format_exc()
     finally:
-        REPORT_JOBS.pop(match_id, None)
+        REPORT_JOBS.pop(cache_key, None)
 
 @tip_bp.route('/submit_tip', methods=['GET', 'POST'])
 @login_required
@@ -106,12 +122,19 @@ def submit_tip():
                 #'date': "TBD" fixture.date if fixture else None
             })
 
+    existing_reports = TipIntelligenceReport.query.filter_by(
+        user_id=current_user.id,
+        round_number=current_round
+    ).all()
+    report_match_ids = {str(report.match_id) for report in existing_reports}
+
     return render_template(
         'submit_tip.html',
         fixtures=visible_fixtures,
         has_submitted=has_submitted,
         submitted_tips=submitted_tips,
-        team_logos=TEAM_LOGOS
+        team_logos=TEAM_LOGOS,
+        report_match_ids=report_match_ids
     )
 
 @tip_bp.route("/view-tips")
@@ -183,20 +206,44 @@ def view_tips():
 @login_required
 def tip_report(match_id):
     match_id = str(match_id)
-    if match_id in REPORT_CACHE:
-        return jsonify({"report": REPORT_CACHE[match_id], "cached": True})
+    cache_key = _report_key(current_user.id, match_id)
+    current_round = find_current_round()
+    fixture = FixtureFree.query.filter_by(match_id=match_id).first()
+    if not fixture:
+        return jsonify({"error": "Match not found."}), 404
+    if fixture.round != current_round:
+        return jsonify({"error": "Report is only available for the current round."}), 403
 
-    if match_id in REPORT_ERRORS:
+    existing_report = TipIntelligenceReport.query.filter_by(
+        user_id=current_user.id,
+        match_id=match_id,
+        round_number=current_round
+    ).first()
+    if existing_report:
+        return jsonify({"report": existing_report.report_content, "cached": True})
+
+    if cache_key in REPORT_CACHE:
+        return jsonify({"report": REPORT_CACHE[cache_key], "cached": True})
+
+    if cache_key in REPORT_ERRORS:
         return jsonify({
-            "error": REPORT_ERRORS[match_id],
-            "traceback": REPORT_TRACEBACKS.get(match_id)
+            "error": REPORT_ERRORS[cache_key],
+            "traceback": REPORT_TRACEBACKS.get(cache_key)
         }), 500
 
-    if match_id not in REPORT_JOBS:
-        REPORT_ERRORS.pop(match_id, None)
-        REPORT_TRACEBACKS.pop(match_id, None)
-        REPORT_CANCELLED.discard(match_id)
-        REPORT_JOBS[match_id] = REPORT_EXECUTOR.submit(_generate_report_async, match_id)
+    if cache_key not in REPORT_JOBS:
+        REPORT_ERRORS.pop(cache_key, None)
+        REPORT_TRACEBACKS.pop(cache_key, None)
+        REPORT_CANCELLED.discard(cache_key)
+        app = current_app._get_current_object()
+        REPORT_JOBS[cache_key] = REPORT_EXECUTOR.submit(
+            _generate_report_async,
+            app,
+            current_user.id,
+            match_id,
+            current_round,
+            cache_key
+        )
 
     return jsonify({"status": "pending"}), 202
 
@@ -204,8 +251,9 @@ def tip_report(match_id):
 @login_required
 def cancel_tip_report(match_id):
     match_id = str(match_id)
-    REPORT_CANCELLED.add(match_id)
-    REPORT_JOBS.pop(match_id, None)
-    REPORT_ERRORS.pop(match_id, None)
-    REPORT_TRACEBACKS.pop(match_id, None)
+    cache_key = _report_key(current_user.id, match_id)
+    REPORT_CANCELLED.add(cache_key)
+    REPORT_JOBS.pop(cache_key, None)
+    REPORT_ERRORS.pop(cache_key, None)
+    REPORT_TRACEBACKS.pop(cache_key, None)
     return jsonify({"status": "cancelled"})

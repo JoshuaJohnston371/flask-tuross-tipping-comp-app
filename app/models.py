@@ -34,6 +34,19 @@ class Tip(db.Model):
         db.UniqueConstraint('user_id', 'match', name='unique_user_match'),
     )
 
+class TipIntelligenceReport(db.Model):
+    __tablename__ = "tip_intelligence_reports"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    match_id = db.Column(db.String, db.ForeignKey("fixture_free.match_id"), nullable=False)
+    round_number = db.Column(db.Integer, nullable=False)
+    report_content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(au_tz))
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "match_id", name="unique_user_match_report"),
+    )
+
 class Fixture(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     match_id = db.Column(db.String, unique=True, nullable=False)
