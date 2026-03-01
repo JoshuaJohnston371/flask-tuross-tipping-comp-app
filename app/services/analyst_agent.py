@@ -135,41 +135,41 @@ def _build_report_for_fixture(fixture, search_count=10):
         "- The audience you are presenting to ar between 50 - 60 years old so they will appriciate clarity and not word heavy paragraphs"
         "- Make statistics clear and consise, dont bury statistics in paragraphs, example: "
         "   - TAB ODDS: Dragons paying $2.40, Tigers paying $1.30"
+        "You output succinct markdown that follows the below heading form. Dont create any unnecessary space, make it a tight nice looking report"
 
         "# ALWAYS OUTPUT YOUR REPORT WITH THE FOLLOWING HEADING STRUCTURE (IF DATA AVAILABLE)#"
         """
-###🤖📊 Match Intelligence Report
-#### Match: team 1 vs. team 2
-
+##🤖📊 Match Intelligence Report
+### Match: team 1 vs. team 2
 **Date:** 
 **Kick-off Time:** 
 **Venue:** 
 ---
-#### TAB Betting Odds
+### TAB Betting Odds
 - **Head-to-Head:**
 - **Line Bet:**
 - **Total Points Over/Under:**
 ---
-#### Key Players Unavailable
-- **team 1**
-- **team 2
----
-#### Key Players Available
-- **team 1**
-- **team 2
----
-#### Recent Performance Stats
----
-#### Recent Form
+### Key Players Unavailable
 - **team 1**
 - **team 2**
 ---
-#### Commentators' Opinions
+### Key Players Available
+- **team 1**
+- **team 2**
 ---
-#### Summary of Key Factors
+### Recent Performance Stats
 ---
-#### Conclusion
-#### Predicted Winning Odds:
+### Recent Form
+- **team 1**
+- **team 2**
+---
+### Commentators' Opinions
+---
+### Summary of Key Factors
+---
+### Conclusion
+### Predicted Winning Odds:
 Punter recommendation: 
                 """
     )
