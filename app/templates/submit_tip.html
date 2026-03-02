@@ -62,33 +62,58 @@
       Click "Create Intelligence Report" to build an analysis report for the match, may take a minute to generate.
     </p>
 
-    {% if has_submitted %}
-      <div class="alert alert-info text-center">
-        You have already submitted your tips for this round.
+    {% if tips_closed %}
+      <div class="alert alert-danger text-center">
+        Tip submissions for this round are now closed.
       </div>
 
-      <div class="row">
-        {% for tip in submitted_tips %}
-          <div class="col-12 col-md-6 mb-4">
-            <div class="card p-3 text-center">
-              <div class="d-flex justify-content-center align-items-center">
-                <img src="{{ team_logos[tip.selected_team] }}" 
-                     class="team-logo selected" 
-                     alt="{{ tip.selected_team }}">
-              </div>
-              <div class="mt-2">
-                You tipped: <strong>{{ tip.selected_team }}</strong>
+      {% if submitted_tips %}
+        <div class="row">
+          {% for tip in submitted_tips %}
+            <div class="col-12 col-md-6 mb-4">
+              <div class="card p-3 text-center">
+                <div class="d-flex justify-content-center align-items-center">
+                  <img src="{{ team_logos[tip.selected_team] }}" 
+                       class="team-logo selected" 
+                       alt="{{ tip.selected_team }}">
+                </div>
+                <div class="mt-2">
+                  You tipped: <strong>{{ tip.selected_team }}</strong>
+                </div>
               </div>
             </div>
-          </div>
-        {% endfor %}
-      </div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
       <div class="text-center mt-4">
         <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Go back to homepage</a>
       </div>
 
     {% else %}
+      {% if has_submitted %}
+        <div class="alert alert-info text-center">
+          You have already submitted tips. You can update them until the round closes.
+        </div>
+
+        <div class="row">
+          {% for tip in submitted_tips %}
+            <div class="col-12 col-md-6 mb-4">
+              <div class="card p-3 text-center">
+                <div class="d-flex justify-content-center align-items-center">
+                  <img src="{{ team_logos[tip.selected_team] }}" 
+                       class="team-logo selected" 
+                       alt="{{ tip.selected_team }}">
+                </div>
+                <div class="mt-2">
+                  You tipped: <strong>{{ tip.selected_team }}</strong>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
       <form id="tip-form" method="POST">
         <div class="row">
           {% for fixture in fixtures %}
@@ -205,15 +230,10 @@
 
     function confirmSubmission() {
       const allInputs = document.querySelectorAll("input[type='hidden'][id^='team-input-']");
-      let allFilled = true;
-      allInputs.forEach(input => {
-        if (!input.value) {
-          allFilled = false;
-        }
-      });
+      const anySelected = Array.from(allInputs).some(input => input.value);
 
-      if (!allFilled) {
-        alert("Please select a team for all matches.");
+      if (!anySelected) {
+        alert("Please select at least one team before submitting.");
         return;
       }
 

@@ -61,9 +61,10 @@ def submit_tip():
     fixtures = FixtureFree.query.filter(FixtureFree.round == current_round).all()
     
     match_ids = [str(f.match_id) for f in fixtures]
-    
+
     existing_tips = Tip.query.filter(Tip.user_id == current_user.id, Tip.match.in_(match_ids)).all()
-    existing_match_ids = {str(t.match) for t in existing_tips}
+    existing_tips_by_match = {str(t.match): t for t in existing_tips}
+    existing_match_ids = set(existing_tips_by_match.keys())
     has_submitted = set(match_ids).issubset(existing_match_ids)
 
     required_match_ids = set(match_ids)
@@ -77,34 +78,43 @@ def submit_tip():
             required_match_ids = {m for m in match_ids if m in {"1", "2"}}
         else:
             required_match_ids = {m for m in match_ids if m not in {"1", "2"}}
+    else:
+        tips_closed = is_past_thursday_5pm_aus()
 
     visible_fixtures = [f for f in fixtures if str(f.match_id) in required_match_ids]
+    has_submitted = set(required_match_ids).issubset(existing_match_ids)
     
     if request.method == 'POST':
         if tips_closed:
             flash('Tip submissions for round 1 are now closed.', 'danger')
             return redirect(url_for('main.home'))
-        if has_submitted:
-            flash('You have already submitted your tips.', 'warning')
-            return redirect(url_for('main.home'))
-
+        created_tips = 0
+        updated_tips = 0
         for fixture in visible_fixtures:
             match_id = str(fixture.match_id)
-            if match_id in existing_match_ids:
-                continue
             selected_team = request.form.get(f'team-input-{match_id}')
 
             if not selected_team:
-                flash('You must select a team for all matches.', 'danger')
-                return redirect(url_for('tip.submit_tip'))
+                continue
 
-            new_tip = Tip(
-                user_id=current_user.id,
-                username=current_user.username,
-                match=match_id,
-                selected_team=selected_team
-            )
-            db.session.add(new_tip)
+            existing_tip = existing_tips_by_match.get(match_id)
+            if existing_tip:
+                if existing_tip.selected_team != selected_team:
+                    existing_tip.selected_team = selected_team
+                    updated_tips += 1
+            else:
+                new_tip = Tip(
+                    user_id=current_user.id,
+                    username=current_user.username,
+                    match=match_id,
+                    selected_team=selected_team
+                )
+                db.session.add(new_tip)
+                created_tips += 1
+
+        if created_tips == 0 and updated_tips == 0:
+            flash('No tips were selected to submit.', 'warning')
+            return redirect(url_for('tip.submit_tip'))
 
         db.session.commit()
         flash('Tips submitted successfully!', 'success')
@@ -135,7 +145,8 @@ def submit_tip():
         submitted_tips=submitted_tips,
         team_logos=TEAM_LOGOS,
         report_match_ids=report_match_ids,
-        current_round=current_round
+        current_round=current_round,
+        tips_closed=tips_closed
     )
 
 @tip_bp.route("/view-tips")
