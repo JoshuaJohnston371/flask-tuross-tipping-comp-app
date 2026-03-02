@@ -126,7 +126,7 @@
                   <div class="text-center">
                     <div class="team-label">Home</div>
                     <img src="{{ team_logos[fixture.home_team] }}" 
-                         class="team-logo" 
+                         class="team-logo{% if selected_tips and selected_tips.get(fixture.match_id|string) == fixture.home_team %} selected{% endif %}" 
                          alt="{{ fixture.home_team }}" 
                          data-match="{{ fixture.match_id }}" 
                          data-team="{{ fixture.home_team }}">
@@ -137,14 +137,15 @@
                   <div class="text-center">
                     <div class="team-label">Away</div>
                     <img src="{{ team_logos[fixture.away_team] }}" 
-                         class="team-logo" 
+                         class="team-logo{% if selected_tips and selected_tips.get(fixture.match_id|string) == fixture.away_team %} selected{% endif %}" 
                          alt="{{ fixture.away_team }}" 
                          data-match="{{ fixture.match_id }}" 
                          data-team="{{ fixture.away_team }}">
                   </div>
                 </div>
 
-                <input type="hidden" name="team-input-{{ fixture.match_id }}" id="team-input-{{ fixture.match_id }}">
+                <input type="hidden" name="team-input-{{ fixture.match_id }}" id="team-input-{{ fixture.match_id }}"
+                       value="{% if selected_tips and selected_tips.get(fixture.match_id|string) %}{{ selected_tips.get(fixture.match_id|string) }}{% endif %}">
 
                 <div class="mt-3">
                   <button class="btn btn-outline-primary btn-sm w-100 report-toggle"

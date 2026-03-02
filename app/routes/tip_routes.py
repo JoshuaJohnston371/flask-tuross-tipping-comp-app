@@ -121,16 +121,17 @@ def submit_tip():
         return redirect(url_for('main.home'))
 
     submitted_tips = []
-    if has_submitted:
-        match_lookup = {f.id: f for f in fixtures}
+    if existing_tips:
         for tip in existing_tips:
-            fixture = match_lookup.get(tip.match)
-            print("here!!!")
-            print(match_lookup.get(73))
             submitted_tips.append({
                 'selected_team': tip.selected_team,
-                #'date': "TBD" fixture.date if fixture else None
             })
+
+    selected_tips = {
+        str(tip.match): tip.selected_team
+        for tip in existing_tips
+        if str(tip.match) in required_match_ids
+    }
 
     existing_reports = TipIntelligenceReport.query.filter_by(
         user_id=current_user.id,
@@ -146,7 +147,8 @@ def submit_tip():
         team_logos=TEAM_LOGOS,
         report_match_ids=report_match_ids,
         current_round=current_round,
-        tips_closed=tips_closed
+        tips_closed=tips_closed,
+        selected_tips=selected_tips
     )
 
 @tip_bp.route("/view-tips")
