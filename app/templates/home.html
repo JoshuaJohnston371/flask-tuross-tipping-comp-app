@@ -105,6 +105,31 @@
         color: #1a1a1a;
       }
 
+      .developer-message {
+        margin: 0.75rem auto 1rem;
+        max-width: 720px;
+        background: rgba(13, 110, 253, 0.12);
+        border: 1px solid rgba(13, 110, 253, 0.4);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        color: #fff;
+        text-align: left;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      }
+
+      .developer-message h6 {
+        margin-bottom: 0.35rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .developer-message p {
+        margin: 0;
+        white-space: pre-wrap;
+      }
+
       .hero-title {
         font-family: "Bebas Neue", Arial, sans-serif;
         letter-spacing: 1px;
@@ -414,6 +439,18 @@
 
         {% if current_user.is_authenticated %}
         <p class="text-center">Hello, {{ current_user.username }}!</p>
+
+        {% if developer_message and developer_message.is_visible and developer_message.message %}
+          <div class="developer-message">
+            <h6>Developer Message</h6>
+            <p>{{ developer_message.message }}</p>
+            {% if developer_message.updated_at %}
+              <div class="text-white-50 small mt-2">
+                Last updated {{ developer_message.updated_at.strftime('%a %d %b, %I:%M%p') }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
 
         <div class="nav-pill-group">
           <a href="{{ url_for('tip.submit_tip') }}" class="nav-pill nav-pill-primary">Submit Tips (NEW intelligence report 🔥)</a>

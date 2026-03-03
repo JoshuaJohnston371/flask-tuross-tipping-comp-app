@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required, logout_user, current_user
-from app.models import ChatMessage, FixtureFree, Tip
+from app.models import ChatMessage, FixtureFree, Tip, DeveloperMessage
 from app.services.fixtures import find_current_round
 from app.utils.helper_functions import get_user_rank
 from app.utils.team_logos import TEAM_LOGOS
@@ -45,6 +45,7 @@ def home():
                 if ts.tzinfo is None:
                     ts = pytz.utc.localize(ts)
                 msg.display_time = ts.astimezone(SYDNEY_TZ).strftime("%H:%M")
+    developer_message = DeveloperMessage.query.first()
     return render_template(
         'home.html',
         current_year=datetime.now().year,
@@ -55,6 +56,7 @@ def home():
         tip_map=tip_map,
         chat_messages=chat_messages,
         chat_open=bool(round_number),
+        developer_message=developer_message,
     )
 
 @main_bp.route('/logout')

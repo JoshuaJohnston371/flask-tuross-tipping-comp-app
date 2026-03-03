@@ -20,6 +20,11 @@
         Change Username
       </a>
     </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="developer-message-tab" data-bs-toggle="tab" href="#developer-message" role="tab" aria-controls="developer-message" aria-selected="false">
+        Developer Message
+      </a>
+    </li>
   </ul>
 
   <!-- Tabs Content -->
@@ -101,6 +106,24 @@
     <div class="tab-pane fade" id="change-username" role="tabpanel" aria-labelledby="change-username-tab">
       <div class="mt-3">
         {% include "change_username.html" %}
+      </div>
+    </div>
+
+    <!-- Developer Message Tab -->
+    <div class="tab-pane fade" id="developer-message" role="tabpanel" aria-labelledby="developer-message-tab">
+      <div class="mt-3 text-white">
+        <form method="POST" class="mt-3">
+          <input type="hidden" name="action" value="developer_message" />
+          <div class="mb-3">
+            <label for="developer_message" class="form-label">Message</label>
+            <textarea class="form-control" id="developer_message" name="developer_message" rows="4" placeholder="Share updates or new features...">{{ developer_message.message if developer_message else '' }}</textarea>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="developer_message_visible" name="developer_message_visible" {% if developer_message and developer_message.is_visible %}checked{% endif %}>
+            <label class="form-check-label" for="developer_message_visible">Show on homepage</label>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Save message</button>
+        </form>
       </div>
     </div>
   </div>

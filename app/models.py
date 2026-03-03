@@ -113,4 +113,11 @@ class ChatMessage(db.Model):
     
     user = db.relationship("User", backref="chat_messages")
     match = db.relationship("FixtureFree", backref="chat_messages")
+
+class DeveloperMessage(db.Model):
+    __tablename__ = "developer_messages"
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.Text, nullable=False)
+    is_visible = db.Column(db.Boolean, default=False, nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(au_tz), onupdate=lambda: datetime.now(au_tz))
     

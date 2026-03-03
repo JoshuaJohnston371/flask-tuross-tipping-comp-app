@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, current_app
 from flask_login import login_required, current_user
-from app.models import User, Tip, FixtureFree
+from app.models import User, Tip, FixtureFree, DeveloperMessage
 from datetime import date
 from app import db
 from app.services.fixtures import find_current_round
@@ -40,6 +40,7 @@ def admin_dashboard():
     username_update_error = None
     register_success = False
     register_error = None
+    developer_message = DeveloperMessage.query.first()
 
     if request.method == "POST":
         action = request.form.get("action")
@@ -82,6 +83,16 @@ def admin_dashboard():
                 db.session.add(new_user)
                 db.session.commit()
                 register_success = True
+        elif action == "developer_message":
+            message_text = request.form.get("developer_message", "").strip()
+            is_visible = request.form.get("developer_message_visible") == "on"
+            if not developer_message:
+                developer_message = DeveloperMessage(message=message_text, is_visible=is_visible)
+                db.session.add(developer_message)
+            else:
+                developer_message.message = message_text
+                developer_message.is_visible = is_visible
+            db.session.commit()
 
     return render_template(
         "admin.html",
@@ -93,4 +104,5 @@ def admin_dashboard():
         register_success=register_success,
         register_error=register_error,
         avatars=avatars,
+        developer_message=developer_message,
     )
