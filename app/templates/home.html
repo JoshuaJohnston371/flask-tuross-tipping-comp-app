@@ -130,6 +130,36 @@
         white-space: pre-wrap;
       }
 
+      .prize-money {
+        margin: 0.75rem auto 1rem;
+        max-width: 720px;
+        background: rgba(25, 135, 84, 0.16);
+        border: 1px solid rgba(25, 135, 84, 0.4);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        color: #fff;
+        text-align: left;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      }
+
+      .prize-money h6 {
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .prize-money ul {
+        margin: 0;
+        padding-left: 1.1rem;
+      }
+
+      .prize-money li {
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+      }
+
       .hero-title {
         font-family: "Bebas Neue", Arial, sans-serif;
         letter-spacing: 1px;
@@ -439,6 +469,15 @@
 
         {% if current_user.is_authenticated %}
         <p class="text-center">Hello, {{ current_user.username }}!</p>
+
+        <div class="prize-money">
+          <h6>Prize Money</h6>
+          <ul>
+            <li>🥇 1st place: $1100</li>
+            <li>🥈 2nd place: $600</li>
+            <li>🥉 3rd place: $300</li>
+          </ul>
+        </div>
 
         {% if developer_message and developer_message.is_visible and developer_message.message %}
           <div class="developer-message">
