@@ -98,6 +98,7 @@ class UserTipStats(db.Model):
     successful_tips = db.Column(db.Integer, default=0)
     failed_tips = db.Column(db.Integer, default=0)
     pending_tips = db.Column(db.Integer, default=0)
+    bonus_tips = db.Column(db.Integer, default=0)
 
     user = db.relationship('User', backref=db.backref('tip_stats', lazy=True))
     

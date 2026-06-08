@@ -152,6 +152,20 @@ def get_user_round_results(user_id, round_number):
             
     return round_results
 
+def is_perfect_round(user_id, round_number, round_results):
+    fixtures = FixtureFree.query.filter_by(round=round_number).all()
+    match_ids = [f.match_id for f in fixtures]
+    tips = Tip.query.filter(Tip.user_id == user_id, Tip.match.in_(match_ids)).all()
+
+    if len(tips) != len(match_ids):
+        return False
+
+    return (
+        round_results["success"] > 0
+        and round_results["failure"] == 0
+        and round_results["pending"] == 0
+    )
+
 # --- New Function to Update UserTipStats ---
 def update_user_tip_stats():
     users = User.query.all()
@@ -159,19 +173,22 @@ def update_user_tip_stats():
     for user in users:
         for round_number in range(1, find_current_round() + 1): 
             round_results = get_user_round_results(user.id, round_number)
+            bonus_tips = 1 if is_perfect_round(user.id, round_number, round_results) else 0
 
             stat = UserTipStats.query.filter_by(user_id=user.id, round_number=round_number).first()
             if stat:
                 stat.successful_tips = round_results["success"]
                 stat.failed_tips = round_results["failure"]
                 stat.pending_tips = round_results["pending"]
+                stat.bonus_tips = bonus_tips
             else:
                 stat = UserTipStats(
                     user_id=user.id,
                     round_number=round_number,
                     successful_tips=round_results["success"],
                     failed_tips=round_results["failure"],
-                    pending_tips=round_results["pending"]
+                    pending_tips=round_results["pending"],
+                    bonus_tips=bonus_tips
                 )
                 db.session.add(stat)
     db.session.commit()

@@ -4,16 +4,18 @@ from dotenv import load_dotenv
 from datetime import datetime
 from app.models import Fixture, FixtureFree, db, User, UserTipStats, Tip
 from app import create_app, db
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, time, timedelta
 import pytz
 from app.services.fixtures import find_current_round
 from sqlalchemy import func, over
+
+SYDNEY_TZ = pytz.timezone("Australia/Sydney")
 
 def get_user_rank(username):
     aggregated_data = (
         db.session.query(
             User.username,
-            db.func.sum(UserTipStats.successful_tips).label("total_success"),
+            db.func.sum(UserTipStats.successful_tips + UserTipStats.bonus_tips).label("total_success"),
             db.func.sum(UserTipStats.pending_tips).label("total_pending")
         )
         .join(User, User.id == UserTipStats.user_id)
@@ -57,6 +59,30 @@ def has_user_submitted_tips(user_id):
 def get_all_rounds():
     rounds = db.session.query(FixtureFree.round).distinct().order_by(FixtureFree.round).all()
     return [r[0] for r in rounds]
+
+
+def get_round_tips_cutoff(round_number):
+    """Return the Thursday 5pm Sydney deadline for a round based on its first fixture."""
+    fixtures = (
+        FixtureFree.query
+        .filter(FixtureFree.round == round_number, FixtureFree.date.isnot(None))
+        .order_by(FixtureFree.date.asc())
+        .all()
+    )
+    if not fixtures:
+        return None
+
+    first_game_date = fixtures[0].date
+    days_to_thursday = 3 - first_game_date.weekday()
+    thursday_date = first_game_date + timedelta(days=days_to_thursday)
+    return SYDNEY_TZ.localize(datetime.combine(thursday_date, time(17, 0, 0)))
+
+
+def is_past_round_tips_cutoff(round_number):
+    cutoff = get_round_tips_cutoff(round_number)
+    if cutoff is None:
+        return False
+    return datetime.now(SYDNEY_TZ) >= cutoff
 
 
 def is_past_thursday_5pm_aus():

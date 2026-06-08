@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from app.models import db, Tip, FixtureFree, User, TipIntelligenceReport
 from app.utils.team_logos import TEAM_LOGOS
 from datetime import date, datetime, timedelta
-from app.utils.helper_functions import get_all_rounds, is_past_thursday_5pm_aus
+from app.utils.helper_functions import get_all_rounds, is_past_round_tips_cutoff
 from app.services.fixtures import find_current_round
 from app.services.analyst_agent import generate_match_report
 import pytz
@@ -79,7 +79,7 @@ def submit_tip():
         else:
             required_match_ids = {m for m in match_ids if m not in {"1", "2"}}
     else:
-        tips_closed = is_past_thursday_5pm_aus()
+        tips_closed = is_past_round_tips_cutoff(current_round)
 
     visible_fixtures = [f for f in fixtures if str(f.match_id) in required_match_ids]
     has_submitted = set(required_match_ids).issubset(existing_match_ids)
@@ -158,10 +158,10 @@ def view_tips():
     all_rounds = get_all_rounds()
     sydney_tz = pytz.timezone("Australia/Sydney")
     now = datetime.now(sydney_tz)
-    after_5_thursday = is_past_thursday_5pm_aus()
-
     if not selected_round:
         selected_round = find_current_round()
+
+    after_5_thursday = is_past_round_tips_cutoff(selected_round)
 
     fixtures = FixtureFree.query.filter_by(round=selected_round).order_by(FixtureFree.match_id.asc()).all()
     match_ids = [f.match_id for f in fixtures]
@@ -186,7 +186,7 @@ def view_tips():
             visibility_message = "Only matches 1-2 visible until 5pm Thu 5 Mar."
         else:
             visible_match_ids = match_ids
-    elif selected_round == find_current_round() and not after_5_thursday:
+    elif not after_5_thursday:
         visible_match_ids = []
         visibility_message = "View others tips after 5pm Thursday."
 

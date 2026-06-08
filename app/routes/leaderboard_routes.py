@@ -15,7 +15,7 @@ def leaderboard():
     aggregated_data = (
         db.session.query(
             User.username,
-            db.func.sum(UserTipStats.successful_tips).label("total_success"),
+            db.func.sum(UserTipStats.successful_tips + UserTipStats.bonus_tips).label("total_success"),
             db.func.sum(UserTipStats.pending_tips).label("total_pending")
         )
         .join(User, User.id == UserTipStats.user_id)
@@ -42,7 +42,7 @@ def leaderboard():
     subquery = (
         db.session.query(
             UserTipStats.round_number.label("round_number"),
-            func.sum(UserTipStats.successful_tips).label("total_success"),
+            func.sum(UserTipStats.successful_tips + UserTipStats.bonus_tips).label("total_success"),
             func.sum(UserTipStats.pending_tips).label("total_pending")
         )
         .filter(UserTipStats.user_id == current_user.id)
