@@ -115,10 +115,13 @@ def find_current_round() -> int:
     monday = today - timedelta(days=today.weekday())
     sunday = monday + timedelta(days=6)
     
+    # Use the highest round in the calendar week so a new round starts on Monday
+    # even when the previous round has a long-weekend Monday game (e.g. round 14).
     current_round = (FixtureFree.query
                      .with_entities(FixtureFree.round)
-                     .filter(FixtureFree.date >= monday,FixtureFree.date <= sunday)
+                     .filter(FixtureFree.date >= monday, FixtureFree.date <= sunday)
                      .distinct()
+                     .order_by(FixtureFree.round.desc())
                      .first()
                      )
     if current_round:
